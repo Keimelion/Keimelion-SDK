@@ -1,0 +1,87 @@
+{
+  "name": "@keimelion/sdk",
+  "version": "0.0.0",
+  "description": "Official TypeScript SDK for the Keimelion API: contract schemas, enums and HTTP client",
+  "license": "MIT",
+  "author": "Keimelion",
+  "homepage": "https://github.com/Keimelion/Keimelion-SDK#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Keimelion/Keimelion-SDK.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Keimelion/Keimelion-SDK/issues"
+  },
+  "keywords": [
+    "keimelion",
+    "sdk",
+    "zod",
+    "api-client"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    "./schemas": {
+      "types": "./dist/schemas/index.d.ts",
+      "default": "./dist/schemas/index.js"
+    },
+    "./enums": {
+      "types": "./dist/enums/index.d.ts",
+      "default": "./dist/enums/index.js"
+    },
+    "./client": {
+      "types": "./dist/client/index.d.ts",
+      "default": "./dist/client/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsup && npm run check:package",
+    "check:package": "node scripts/check-dist.mjs && publint --strict && attw --pack . --profile esm-only",
+    "dev": "tsup --watch --onSuccess \"yalc push --sig\"",
+    "lint": "eslint . && node scripts/check-schema-types.mjs",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write src/ test/ scripts/",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:pack": "node scripts/pack-smoke.mjs",
+    "check": "npm run lint && npm run typecheck && npm test && npm run build",
+    "prepare": "husky"
+  },
+  "peerDependencies": {
+    "zod": "^4.5.0"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.5",
+    "@commitlint/cli": "^21.2.4",
+    "@commitlint/config-conventional": "^21.2.4",
+    "@eslint/js": "^10.0.1",
+    "@semantic-release/changelog": "^7.0.0",
+    "@semantic-release/commit-analyzer": "^13.0.1",
+    "@semantic-release/git": "^11.0.1",
+    "@semantic-release/github": "^12.0.10",
+    "@semantic-release/npm": "^13.2.0",
+    "@semantic-release/release-notes-generator": "^14.1.1",
+    "conventional-changelog-conventionalcommits": "^9.3.1",
+    "eslint": "^10.14.0",
+    "husky": "^9.1.7",
+    "prettier": "^3.3.3",
+    "publint": "^0.3.25",
+    "semantic-release": "^25.0.9",
+    "tsup": "^9.0.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.0.0",
+    "vitest": "^5.0.5",
+    "yalc": "^1.0.0-pre.53",
+    "zod": "^4.6.7"
+  }
+}
