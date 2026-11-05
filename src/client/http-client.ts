@@ -5,7 +5,6 @@ import { apiErrorBodySchema } from '../schemas/shared/error.js'
 import { ApiError, createInvalidResponseError } from './api-error.js'
 
 const JSON_CONTENT_TYPE = 'application/json'
-const TRAILING_SLASHES_REGEX = /\/+$/
 
 export type TokenProvider = () => string | null | Promise<string | null>
 
@@ -33,7 +32,7 @@ export interface HttpClientOptions {
 type JsonBodyResult = { isJson: true; value: unknown } | { isJson: false; cause: unknown }
 
 export function createHttpClient(options: HttpClientOptions): HttpClient {
-  const baseUrl = options.baseUrl.replace(TRAILING_SLASHES_REGEX, '')
+  const baseUrl = trimTrailingSlashes(options.baseUrl)
   const fetchFunction = options.fetch ?? defaultFetch
 
   return {
@@ -49,6 +48,14 @@ export function createHttpClient(options: HttpClientOptions): HttpClient {
       return parseResponseBody(response.status, body, request.responseSchema)
     },
   }
+}
+
+function trimTrailingSlashes(url: string): string {
+  let end = url.length
+  while (end > 0 && url[end - 1] === '/') {
+    end -= 1
+  }
+  return url.slice(0, end)
 }
 
 function defaultFetch(url: string, init: RequestInit): Promise<Response> {
