@@ -111,6 +111,15 @@ const session = loginResponseSchema.parse(json) // session.user.createdAt is a D
 
 ## Contract conventions
 
+- `@keimelion/sdk/schemas` re-exports every domain **flat**, so every exported name must be
+  unique across the whole package (a collision fails `tsc` with TS2308). Name schemas
+  `<domain><Action><Kind>Schema`, where `<Kind>` is `Request`, `Response`, `Query` or
+  `Params`: `listsCreateRequestSchema`, `adminUsersListQuerySchema`,
+  `reservationsCancelResponseSchema`. Auth actions are unique on their own, so auth keeps
+  `loginRequestSchema`, `refreshResponseSchema`… Entity shapes reused across endpoints are
+  `<entity>DetailSchema` / `<entity>SummarySchema` (`userDetailSchema`).
+- A schema used by more than one domain lives in `src/schemas/_shared/` (e.g.
+  `imageDetailSchema`, `emailSchema`), never in one domain imported by another.
 - Every schema exports **two types** next to it: `XInput = z.input<typeof xSchema>` (what a
   caller sends / what is on the wire) and `XParsed = z.output<typeof xSchema>` (what the API
   handler receives / what the client returns). CI fails if one is missing.
@@ -173,3 +182,7 @@ build, `publint`, `attw`, `npm publish --provenance --access public`.
 
 The package is in **0.x**: a breaking change bumps the minor version (`0.1.0 → 0.2.0`), so
 consumers should depend on `^0.x.0`.
+
+## License
+
+[MIT](./LICENSE)

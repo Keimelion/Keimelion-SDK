@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, expectTypeOf, it } from 'vitest'
 import { z } from 'zod'
 import { ApiError, ClientErrorCode } from '../../../src/client/_core/api-error.js'
+import type { ApiErrorCode } from '../../../src/client/_core/api-error.js'
 import { createHttpClient, RequestAuthMode } from '../../../src/client/_core/http-client.js'
 import { ErrorCode } from '../../../src/enums/error-code.js'
 import { HttpMethod, HttpStatus } from '../../../src/enums/http.js'
@@ -284,5 +285,11 @@ describe('createHttpClient', () => {
     })
 
     expect(calls[0]?.init.signal).toBe(controller.signal)
+  })
+  it('types ApiError.code with the known codes while accepting unknown ones', () => {
+    expectTypeOf<typeof ErrorCode.INVALID_REFRESH_TOKEN>().toExtend<ApiErrorCode>()
+    expectTypeOf<typeof ClientErrorCode.INVALID_RESPONSE>().toExtend<ApiErrorCode>()
+    expectTypeOf<string>().toExtend<ApiErrorCode>()
+    expectTypeOf<ApiError['code']>().toEqualTypeOf<ApiErrorCode>()
   })
 })

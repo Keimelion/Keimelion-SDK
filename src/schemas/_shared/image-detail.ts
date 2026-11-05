@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { isoDateTimeSchema } from '../_shared/timestamp.js'
+import { isoDateTimeSchema } from './timestamp.js'
 
 export const imageUrlsSchema = z.object({
   sm: z.url(),

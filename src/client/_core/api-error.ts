@@ -1,16 +1,21 @@
 import { validationErrorMetadataSchema } from '../../schemas/_shared/error.js'
 import type { ValidationIssueParsed } from '../../schemas/_shared/error.js'
+import type { ErrorCode } from '../../enums/error-code.js'
 
 export const ClientErrorCode = {
   INVALID_RESPONSE: 'INVALID_RESPONSE',
 } as const
 export type ClientErrorCode = (typeof ClientErrorCode)[keyof typeof ClientErrorCode]
 
+// Known codes autocomplete; the `string` fallback keeps an older client working when the API
+// starts sending a code this SDK version does not know yet.
+export type ApiErrorCode = ErrorCode | ClientErrorCode | (string & Record<never, never>)
+
 export const INVALID_RESPONSE_MESSAGE = 'The API response does not match the expected contract'
 
 export interface ApiErrorOptions {
   status: number
-  code: string
+  code: ApiErrorCode
   message: string
   metadata: Record<string, unknown>
   cause?: unknown
@@ -19,7 +24,7 @@ export interface ApiErrorOptions {
 export class ApiError extends Error {
   override readonly name = 'ApiError'
   readonly status: number
-  readonly code: string
+  readonly code: ApiErrorCode
   readonly metadata: Record<string, unknown>
   readonly issues: ValidationIssueParsed[]
 

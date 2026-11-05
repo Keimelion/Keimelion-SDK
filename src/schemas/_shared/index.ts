@@ -1,6 +1,7 @@
 export * from './currency.js'
 export * from './email.js'
 export * from './error.js'
+export * from './image-detail.js'
 export * from './message-response.js'
 export * from './messages.js'
 export * from './no-content.js'

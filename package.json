@@ -2,7 +2,7 @@
   "name": "@keimelion/sdk",
   "version": "0.0.0",
   "description": "Official TypeScript SDK for the Keimelion API: contract schemas, enums and HTTP client",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "author": "Keimelion",
   "homepage": "https://github.com/Keimelion/Keimelion-SDK#readme",
   "repository": {

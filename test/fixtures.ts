@@ -1,4 +1,4 @@
-import type { ImageDetailInput } from '../src/schemas/users/image-detail.js'
+import type { ImageDetailInput } from '../src/schemas/_shared/image-detail.js'
 import type { UserDetailInput } from '../src/schemas/users/user-detail.js'
 
 export const CREATED_AT_ISO = '2026-11-05T10:15:30.000Z'

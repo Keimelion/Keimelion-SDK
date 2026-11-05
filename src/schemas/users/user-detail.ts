@@ -3,7 +3,7 @@ import { AUTH_PROVIDER_VALUES } from '../../enums/auth-provider.js'
 import { USER_ROLE_VALUES } from '../../enums/user-role.js'
 import { supportedCurrencyEnum } from '../_shared/currency.js'
 import { isoDateTimeSchema } from '../_shared/timestamp.js'
-import { imageDetailSchema } from './image-detail.js'
+import { imageDetailSchema } from '../_shared/image-detail.js'
 
 export const userDetailSchema = z.object({
   id: z.guid(),
