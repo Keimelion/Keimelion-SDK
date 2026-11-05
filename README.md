@@ -37,6 +37,7 @@ const client = createClient({
   baseUrl: 'https://api.keimelion.com',
   getToken: async () => (await storage.get('accessToken')) ?? null,
   // fetch: customFetch, // optional, defaults to globalThis.fetch
+  // timeoutMs: 10_000, // optional, defaults to 30 s; null disables it
 })
 
 try {
@@ -62,6 +63,12 @@ try {
   `code: 'INVALID_RESPONSE'` (`ClientErrorCode.INVALID_RESPONSE`), the Zod error as `cause`.
 - Any API error (`{ message, code, metadata }`) throws `ApiError` exposing `status`, `code`,
   `message`, `metadata` and `issues` (`metadata.issues` of a 422, `[]` otherwise).
+- When no HTTP response is received, the client also throws `ApiError`, with `status: 0` and
+  the original error as `cause`: `NETWORK_ERROR` (offline, DNS, CORS), `TIMEOUT` (`timeoutMs`
+  elapsed) or `ABORTED` (the caller's `signal` fired). `ApiError` is the only error type a
+  consumer has to handle.
+- `message` is an English developer message, never meant for end users: UIs translate from
+  `code` (and `issues[].code` for a 422).
 - There is no automatic refresh / 401 interceptor in 0.x yet: call `client.auth.refresh()`
   yourself when an access token expires.
 
@@ -126,7 +133,10 @@ const session = loginResponseSchema.parse(json) // session.user.createdAt is a D
 - Response schemas are plain `z.object` (unknown keys are **stripped**, not rejected), so
   additive API fields are non-breaking for older clients. Adding an **enum value** is not:
   it requires an SDK release before the API starts sending it.
-- Timestamps use a codec: ISO string on the wire ↔ `Date` once parsed.
+- Timestamps (`*_at` columns) use a codec: ISO string on the wire ↔ `Date` once parsed.
+- Calendar dates without a time (`*_date` columns, e.g. a future `event_date`) stay
+  `YYYY-MM-DD` strings (`z.iso.date()`): turning them into a `Date` shifts the day depending
+  on the viewer's timezone.
 - Postgres `numeric` columns (prices, FX rates) are **strings** on the wire, never numbers.
 - Response schemas never declare internal columns (password / token hashes, internal
   tokens).
@@ -163,13 +173,13 @@ a husky `pre-commit` hook rejects a `file:.yalc` dependency or a staged `yalc.lo
 
 ## Scripts
 
-| Script                    | Role                                                                                                                  |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `npm run build`           | `tsup` (ESM + CJS + `.d.ts`), then zod-not-bundled check, `publint --strict`, `attw`                                  |
-| `npm run lint`            | ESLint (strict + stylistic type-checked, Node/server import guard) + schema type-export check                         |
-| `npm run typecheck`       | `tsc --noEmit` (strict, no `@types/node`)                                                                             |
-| `npm test`                | Vitest                                                                                                                |
-| `npm run test:pack [dir]` | `npm pack`, install the tarball + zod in a scratch project, import every subpath from ESM and CJS and type-check both |
+| Script                    | Role                                                                                                        |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `npm run build`           | `tsup` (ESM-only + `.d.ts`), then zod-not-bundled check, `publint --strict`, `attw`                         |
+| `npm run lint`            | ESLint (strict + stylistic type-checked, Node/server import guard) + schema type-export check               |
+| `npm run typecheck`       | `tsc --noEmit` (strict, no `@types/node`)                                                                   |
+| `npm test`                | Vitest                                                                                                      |
+| `npm run test:pack [dir]` | `npm pack`, install the tarball + zod in a scratch project, import every subpath from ESM and type-check it |
 
 ## Release
 

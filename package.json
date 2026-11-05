@@ -25,34 +25,16 @@
   ],
   "exports": {
     "./schemas": {
-      "import": {
-        "types": "./dist/schemas/index.d.ts",
-        "default": "./dist/schemas/index.js"
-      },
-      "require": {
-        "types": "./dist/schemas/index.d.cts",
-        "default": "./dist/schemas/index.cjs"
-      }
+      "types": "./dist/schemas/index.d.ts",
+      "default": "./dist/schemas/index.js"
     },
     "./enums": {
-      "import": {
-        "types": "./dist/enums/index.d.ts",
-        "default": "./dist/enums/index.js"
-      },
-      "require": {
-        "types": "./dist/enums/index.d.cts",
-        "default": "./dist/enums/index.cjs"
-      }
+      "types": "./dist/enums/index.d.ts",
+      "default": "./dist/enums/index.js"
     },
     "./client": {
-      "import": {
-        "types": "./dist/client/index.d.ts",
-        "default": "./dist/client/index.js"
-      },
-      "require": {
-        "types": "./dist/client/index.d.cts",
-        "default": "./dist/client/index.cjs"
-      }
+      "types": "./dist/client/index.d.ts",
+      "default": "./dist/client/index.js"
     },
     "./package.json": "./package.json"
   },
@@ -64,7 +46,7 @@
   },
   "scripts": {
     "build": "tsup && npm run check:package",
-    "check:package": "node scripts/check-dist.mjs && publint --strict && attw --pack . --profile node16",
+    "check:package": "node scripts/check-dist.mjs && publint --strict && attw --pack . --profile esm-only",
     "dev": "tsup --watch --onSuccess \"yalc push --sig\"",
     "lint": "eslint . && node scripts/check-schema-types.mjs",
     "typecheck": "tsc --noEmit",

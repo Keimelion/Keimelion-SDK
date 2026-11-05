@@ -3,7 +3,7 @@ import { join } from 'node:path'
 
 const DIST_DIR = 'dist'
 const ZOD_INTERNAL_MARKERS = ['$constructor(', 'class ZodError', '$ZodType']
-const JS_EXTENSIONS = ['.js', '.cjs']
+const JS_EXTENSIONS = ['.js']
 
 const bundledFiles = listFiles(DIST_DIR)
   .filter((file) => JS_EXTENSIONS.some((extension) => file.endsWith(extension)))

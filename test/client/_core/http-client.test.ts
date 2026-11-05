@@ -11,6 +11,22 @@ import { jsonResponse, mockFetchResponse, recordedHeaders } from '../fetch-mock.
 const BASE_URL = 'https://api.example.com'
 const pingSchema = z.object({ pong: z.boolean() })
 
+// Never resolves on its own: settles only when the request signal aborts, like a real fetch
+// (which also rejects straight away when the signal is already aborted).
+function hangingFetch(_url: string, init: RequestInit): Promise<Response> {
+  return new Promise((_resolve, reject) => {
+    const signal = init.signal
+    const rejectWithReason = (): void => {
+      reject(signal?.reason instanceof Error ? signal.reason : new Error('aborted'))
+    }
+    if (signal?.aborted) {
+      rejectWithReason()
+      return
+    }
+    signal?.addEventListener('abort', rejectWithReason)
+  })
+}
+
 async function captureError(promise: Promise<unknown>): Promise<ApiError> {
   const error: unknown = await promise.catch((caught: unknown) => caught)
   if (!(error instanceof ApiError)) throw new Error('Expected an ApiError')
@@ -272,9 +288,14 @@ describe('createHttpClient', () => {
     expect(recordedHeaders(calls[0]).Authorization).toBe('Bearer rsv_abc')
   })
 
-  it('forwards the abort signal to fetch', async () => {
+  it('forwards the caller signal as-is when the timeout is disabled', async () => {
     const { fetch, calls } = mockFetchResponse(jsonResponse({ pong: true }))
-    const http = createHttpClient({ baseUrl: BASE_URL, getToken: () => null, fetch })
+    const http = createHttpClient({
+      baseUrl: BASE_URL,
+      getToken: () => null,
+      fetch,
+      timeoutMs: null,
+    })
     const controller = new AbortController()
 
     await http.request({
@@ -285,6 +306,67 @@ describe('createHttpClient', () => {
     })
 
     expect(calls[0]?.init.signal).toBe(controller.signal)
+  })
+
+  it('attaches a timeout signal by default', async () => {
+    const { fetch, calls } = mockFetchResponse(jsonResponse({ pong: true }))
+    const http = createHttpClient({ baseUrl: BASE_URL, getToken: () => null, fetch })
+
+    await http.request({ method: HttpMethod.GET, path: '/v1/ping', responseSchema: pingSchema })
+
+    expect(calls[0]?.init.signal).toBeInstanceOf(AbortSignal)
+  })
+
+  it('throws TIMEOUT with status 0 when the API does not answer in time', async () => {
+    const http = createHttpClient({
+      baseUrl: BASE_URL,
+      getToken: () => null,
+      fetch: hangingFetch,
+      timeoutMs: 10,
+    })
+
+    const error = await captureError(
+      http.request({ method: HttpMethod.GET, path: '/v1/ping', responseSchema: pingSchema }),
+    )
+
+    expect(error.code).toBe(ClientErrorCode.TIMEOUT)
+    expect(error.status).toBe(0)
+  })
+
+  it('throws ABORTED when the caller aborts the request', async () => {
+    const http = createHttpClient({ baseUrl: BASE_URL, getToken: () => null, fetch: hangingFetch })
+    const controller = new AbortController()
+
+    const pending = captureError(
+      http.request({
+        method: HttpMethod.GET,
+        path: '/v1/ping',
+        signal: controller.signal,
+        responseSchema: pingSchema,
+      }),
+    )
+    controller.abort()
+    const error = await pending
+
+    expect(error.code).toBe(ClientErrorCode.ABORTED)
+    expect(error.status).toBe(0)
+  })
+
+  it('throws NETWORK_ERROR with the fetch error as cause when the API is unreachable', async () => {
+    const networkFailure = new TypeError('fetch failed')
+    const http = createHttpClient({
+      baseUrl: BASE_URL,
+      getToken: () => null,
+      fetch: () => Promise.reject(networkFailure),
+    })
+
+    const error = await captureError(
+      http.request({ method: HttpMethod.GET, path: '/v1/ping', responseSchema: pingSchema }),
+    )
+
+    expect(error.code).toBe(ClientErrorCode.NETWORK_ERROR)
+    expect(error.status).toBe(0)
+    expect(error.cause).toBe(networkFailure)
   })
   it('types ApiError.code with the known codes while accepting unknown ones', () => {
     expectTypeOf<typeof ErrorCode.INVALID_REFRESH_TOKEN>().toExtend<ApiErrorCode>()

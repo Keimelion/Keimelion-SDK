@@ -34,17 +34,9 @@ writeFileSync(
   join(scratchDir, 'esm.mjs'),
   buildRuntimeProbe((subpath) => `import { ${PROBES[subpath]} } from '@keimelion/sdk/${subpath}'`),
 )
-writeFileSync(
-  join(scratchDir, 'cjs.cjs'),
-  buildRuntimeProbe(
-    (subpath) => `const { ${PROBES[subpath]} } = require('@keimelion/sdk/${subpath}')`,
-  ),
-)
 writeFileSync(join(scratchDir, 'types.mts'), buildTypeProbe())
-writeFileSync(join(scratchDir, 'types.cts'), buildTypeProbe())
 
 console.log(run('node', ['esm.mjs'], scratchDir).trim())
-console.log(run('node', ['cjs.cjs'], scratchDir).trim())
 const tsc = join(packageRoot, 'node_modules', 'typescript', 'bin', 'tsc')
 run(
   'node',
@@ -61,11 +53,10 @@ run(
     '--lib',
     'es2022,dom',
     'types.mts',
-    'types.cts',
   ],
   scratchDir,
 )
-console.log('types: ESM (.mts) and CJS (.cts) consumers type-check against the tarball')
+console.log('types: an ESM (.mts) consumer type-checks against the tarball')
 console.log(`pack smoke OK (${tarball}) in ${scratchDir}`)
 
 function buildRuntimeProbe(importLine) {

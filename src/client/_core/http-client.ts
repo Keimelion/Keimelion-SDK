@@ -2,10 +2,11 @@ import type { z } from 'zod'
 import { HttpHeader, HttpStatus } from '../../enums/http.js'
 import type { HttpMethod } from '../../enums/http.js'
 import { apiErrorBodySchema } from '../../schemas/_shared/error.js'
-import { ApiError, createInvalidResponseError } from './api-error.js'
+import { ApiError, createInvalidResponseError, createTransportError } from './api-error.js'
 
 const JSON_CONTENT_TYPE = 'application/json'
 const PATH_PARAM_PREFIX = ':'
+export const DEFAULT_TIMEOUT_MS = 30_000
 
 export type TokenProvider = () => string | null | Promise<string | null>
 
@@ -38,6 +39,7 @@ export interface HttpRequest<TResponseSchema extends z.ZodType> {
   query?: QueryParams
   body?: unknown
   auth?: RequestAuth
+  // Combined with the client timeout: whichever fires first aborts the request.
   signal?: AbortSignal
   responseSchema: TResponseSchema
 }
@@ -52,6 +54,8 @@ export interface HttpClientOptions {
   baseUrl: string
   getToken: TokenProvider
   fetch?: FetchFunction
+  // Per-request timeout; `null` disables it. Defaults to DEFAULT_TIMEOUT_MS.
+  timeoutMs?: number | null
 }
 
 type JsonBodyResult = { isJson: true; value: unknown } | { isJson: false; cause: unknown }
@@ -59,14 +63,17 @@ type JsonBodyResult = { isJson: true; value: unknown } | { isJson: false; cause:
 export function createHttpClient(options: HttpClientOptions): HttpClient {
   const baseUrl = trimTrailingSlashes(options.baseUrl)
   const fetchFunction = options.fetch ?? defaultFetch
+  const timeoutMs = options.timeoutMs === undefined ? DEFAULT_TIMEOUT_MS : options.timeoutMs
 
   return {
     async request<TResponseSchema extends z.ZodType>(
       request: HttpRequest<TResponseSchema>,
     ): Promise<z.output<TResponseSchema>> {
       const url = `${baseUrl}${buildPath(request.path, request.pathParams)}${buildQueryString(request.query)}`
-      const init = await buildRequestInit(request, options.getToken)
-      const response = await fetchFunction(url, init)
+      const init = await buildRequestInit(request, options.getToken, timeoutMs)
+      const response = await fetchFunction(url, init).catch((error: unknown) => {
+        throw createTransportError(error)
+      })
       const body = await readJsonBody(response)
       if (!response.ok) {
         throw toApiError(response.status, body)
@@ -126,9 +133,19 @@ async function resolveToken(
   return getToken()
 }
 
+function buildSignal(
+  callerSignal: AbortSignal | undefined,
+  timeoutMs: number | null,
+): AbortSignal | undefined {
+  if (timeoutMs === null) return callerSignal
+  const timeoutSignal = AbortSignal.timeout(timeoutMs)
+  return callerSignal ? AbortSignal.any([callerSignal, timeoutSignal]) : timeoutSignal
+}
+
 async function buildRequestInit<TResponseSchema extends z.ZodType>(
   request: HttpRequest<TResponseSchema>,
   getToken: TokenProvider,
+  timeoutMs: number | null,
 ): Promise<RequestInit> {
   const headers: Record<string, string> = { [HttpHeader.ACCEPT]: JSON_CONTENT_TYPE }
   const token = await resolveToken(request.auth, getToken)
@@ -136,8 +153,9 @@ async function buildRequestInit<TResponseSchema extends z.ZodType>(
     headers[HttpHeader.AUTHORIZATION] = `Bearer ${token}`
   }
   const init: RequestInit = { method: request.method, headers }
-  if (request.signal) {
-    init.signal = request.signal
+  const signal = buildSignal(request.signal, timeoutMs)
+  if (signal) {
+    init.signal = signal
   }
   if (request.body === undefined) {
     return init

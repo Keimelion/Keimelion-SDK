@@ -6,7 +6,7 @@ export default defineConfig({
     'enums/index': 'src/enums/index.ts',
     'client/index': 'src/client/index.ts',
   },
-  format: ['esm', 'cjs'],
+  format: ['esm'],
   dts: true,
   clean: true,
   sourcemap: true,
