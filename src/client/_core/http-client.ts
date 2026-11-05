@@ -1,19 +1,44 @@
 import type { z } from 'zod'
-import { HttpHeader } from '../enums/http.js'
-import type { HttpMethod } from '../enums/http.js'
-import { apiErrorBodySchema } from '../schemas/_shared/error.js'
+import { HttpHeader, HttpStatus } from '../../enums/http.js'
+import type { HttpMethod } from '../../enums/http.js'
+import { apiErrorBodySchema } from '../../schemas/_shared/error.js'
 import { ApiError, createInvalidResponseError } from './api-error.js'
 
 const JSON_CONTENT_TYPE = 'application/json'
+const PATH_PARAM_PREFIX = ':'
 
 export type TokenProvider = () => string | null | Promise<string | null>
 
 export type FetchFunction = (url: string, init: RequestInit) => Promise<Response>
 
+export type PathParams = Record<string, string | number>
+
+export type QueryValue = string | number | boolean | null | undefined
+
+// `null` / `undefined` values are skipped; arrays are sent as repeated keys (`?tag=a&tag=b`).
+// Bracket keys pass through as-is, e.g. `{ 'title[ilike]': 'foo' }` for admin filters.
+export type QueryParams = Record<string, QueryValue | readonly QueryValue[]>
+
+export const RequestAuthMode = {
+  // Default: the Bearer token comes from the client's `getToken`.
+  TOKEN_PROVIDER: 'token-provider',
+  // Public route: never send an Authorization header.
+  NONE: 'none',
+} as const
+export type RequestAuthMode = (typeof RequestAuthMode)[keyof typeof RequestAuthMode]
+
+// An explicit token bypasses `getToken` (e.g. the anonymous `rsv_…` reservation token).
+export type RequestAuth = RequestAuthMode | { token: string }
+
 export interface HttpRequest<TResponseSchema extends z.ZodType> {
   method: HttpMethod
+  // Path template; `:name` segments are replaced from `pathParams`, e.g. `/v1/lists/:id`.
   path: string
+  pathParams?: PathParams
+  query?: QueryParams
   body?: unknown
+  auth?: RequestAuth
+  signal?: AbortSignal
   responseSchema: TResponseSchema
 }
 
@@ -39,8 +64,9 @@ export function createHttpClient(options: HttpClientOptions): HttpClient {
     async request<TResponseSchema extends z.ZodType>(
       request: HttpRequest<TResponseSchema>,
     ): Promise<z.output<TResponseSchema>> {
+      const url = `${baseUrl}${buildPath(request.path, request.pathParams)}${buildQueryString(request.query)}`
       const init = await buildRequestInit(request, options.getToken)
-      const response = await fetchFunction(`${baseUrl}${request.path}`, init)
+      const response = await fetchFunction(url, init)
       const body = await readJsonBody(response)
       if (!response.ok) {
         throw toApiError(response.status, body)
@@ -62,23 +88,68 @@ function defaultFetch(url: string, init: RequestInit): Promise<Response> {
   return globalThis.fetch(url, init)
 }
 
+function buildPath(template: string, pathParams: PathParams = {}): string {
+  return template
+    .split('/')
+    .map((segment) => {
+      if (!segment.startsWith(PATH_PARAM_PREFIX)) return segment
+      const name = segment.slice(PATH_PARAM_PREFIX.length)
+      const value = pathParams[name]
+      if (value === undefined) {
+        throw new Error(`Missing path param "${name}" for ${template}`)
+      }
+      return encodeURIComponent(String(value))
+    })
+    .join('/')
+}
+
+function buildQueryString(query: QueryParams | undefined): string {
+  if (!query) return ''
+  const searchParams = new URLSearchParams()
+  for (const [key, rawValue] of Object.entries(query)) {
+    const values: readonly QueryValue[] = Array.isArray(rawValue) ? rawValue : [rawValue]
+    for (const value of values) {
+      if (value === null || value === undefined) continue
+      searchParams.append(key, String(value))
+    }
+  }
+  const serialized = searchParams.toString()
+  return serialized === '' ? '' : `?${serialized}`
+}
+
+async function resolveToken(
+  auth: RequestAuth | undefined,
+  getToken: TokenProvider,
+): Promise<string | null> {
+  if (auth === RequestAuthMode.NONE) return null
+  if (typeof auth === 'object') return auth.token
+  return getToken()
+}
+
 async function buildRequestInit<TResponseSchema extends z.ZodType>(
   request: HttpRequest<TResponseSchema>,
   getToken: TokenProvider,
 ): Promise<RequestInit> {
   const headers: Record<string, string> = { [HttpHeader.ACCEPT]: JSON_CONTENT_TYPE }
-  const token = await getToken()
+  const token = await resolveToken(request.auth, getToken)
   if (token) {
     headers[HttpHeader.AUTHORIZATION] = `Bearer ${token}`
   }
+  const init: RequestInit = { method: request.method, headers }
+  if (request.signal) {
+    init.signal = request.signal
+  }
   if (request.body === undefined) {
-    return { method: request.method, headers }
+    return init
   }
   headers[HttpHeader.CONTENT_TYPE] = JSON_CONTENT_TYPE
-  return { method: request.method, headers, body: JSON.stringify(request.body) }
+  return { ...init, body: JSON.stringify(request.body) }
 }
 
 async function readJsonBody(response: Response): Promise<JsonBodyResult> {
+  if (response.status === HttpStatus.NO_CONTENT) {
+    return { isJson: true, value: undefined }
+  }
   try {
     return { isJson: true, value: await response.json() }
   } catch (error: unknown) {

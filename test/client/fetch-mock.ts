@@ -1,5 +1,5 @@
 import { vi } from 'vitest'
-import type { FetchFunction } from '../../src/client/http-client.js'
+import type { FetchFunction } from '../../src/client/_core/http-client.js'
 
 export interface RecordedRequest {
   url: string

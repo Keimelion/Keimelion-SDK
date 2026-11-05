@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { ApiError, ClientErrorCode } from '../../src/client/api-error.js'
-import { AuthPaths } from '../../src/client/auth.js'
-import { createClient } from '../../src/client/create-client.js'
-import { buildUserDetailWire, CREATED_AT_ISO } from '../fixtures.js'
-import { jsonResponse, mockFetchResponse, recordedHeaders } from './fetch-mock.js'
+import { ApiError, ClientErrorCode } from '../../../src/client/_core/api-error.js'
+import { AuthPaths } from '../../../src/client/auth/auth.paths.js'
+import { createClient } from '../../../src/client/create-client.js'
+import { buildUserDetailWire, CREATED_AT_ISO } from '../../fixtures.js'
+import { jsonResponse, mockFetchResponse, recordedHeaders } from '../fetch-mock.js'
 
 const BASE_URL = 'https://api.example.com'
 
@@ -48,6 +48,17 @@ describe('client.auth', () => {
     expect(calls[0]?.url).toBe(`${BASE_URL}${AuthPaths.REFRESH}`)
     expect(JSON.parse(calls[0]?.init.body as string)).toEqual({ refreshToken: 'r1' })
     expect(tokens).toEqual({ accessToken: 'a2', refreshToken: 'r2' })
+  })
+
+  it('refresh never sends the (possibly expired) access token: the route is public', async () => {
+    const { fetch, calls } = mockFetchResponse(
+      jsonResponse({ accessToken: 'a2', refreshToken: 'r2' }),
+    )
+    const client = createClient({ baseUrl: BASE_URL, getToken: () => 'expired-jwt', fetch })
+
+    await client.auth.refresh({ refreshToken: 'r1' })
+
+    expect(recordedHeaders(calls[0])).not.toHaveProperty('Authorization')
   })
 
   it('logout carries the Bearer token from an async getToken and an empty JSON body', async () => {

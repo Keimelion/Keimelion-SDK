@@ -1,38 +1,30 @@
-import { HttpMethod } from '../enums/http.js'
-import { loginResponseSchema } from '../schemas/auth/login.js'
-import type { LoginRequestInput, LoginResponseParsed } from '../schemas/auth/login.js'
-import { refreshResponseSchema } from '../schemas/auth/refresh.js'
-import type { RefreshRequestInput, RefreshResponseParsed } from '../schemas/auth/refresh.js'
-import { logoutResponseSchema } from '../schemas/auth/logout.js'
-import type { LogoutRequestInput, LogoutResponseParsed } from '../schemas/auth/logout.js'
-import { registerResponseSchema } from '../schemas/auth/register.js'
-import type { RegisterRequestInput, RegisterResponseParsed } from '../schemas/auth/register.js'
-import { verifyEmailResponseSchema } from '../schemas/auth/verify-email.js'
+import { HttpMethod } from '../../enums/http.js'
+import { loginResponseSchema } from '../../schemas/auth/login.js'
+import type { LoginRequestInput, LoginResponseParsed } from '../../schemas/auth/login.js'
+import { refreshResponseSchema } from '../../schemas/auth/refresh.js'
+import type { RefreshRequestInput, RefreshResponseParsed } from '../../schemas/auth/refresh.js'
+import { logoutResponseSchema } from '../../schemas/auth/logout.js'
+import type { LogoutRequestInput, LogoutResponseParsed } from '../../schemas/auth/logout.js'
+import { registerResponseSchema } from '../../schemas/auth/register.js'
+import type { RegisterRequestInput, RegisterResponseParsed } from '../../schemas/auth/register.js'
+import { verifyEmailResponseSchema } from '../../schemas/auth/verify-email.js'
 import type {
   VerifyEmailRequestInput,
   VerifyEmailResponseParsed,
-} from '../schemas/auth/verify-email.js'
-import { forgotPasswordResponseSchema } from '../schemas/auth/forgot-password.js'
+} from '../../schemas/auth/verify-email.js'
+import { forgotPasswordResponseSchema } from '../../schemas/auth/forgot-password.js'
 import type {
   ForgotPasswordRequestInput,
   ForgotPasswordResponseParsed,
-} from '../schemas/auth/forgot-password.js'
-import { resetPasswordResponseSchema } from '../schemas/auth/reset-password.js'
+} from '../../schemas/auth/forgot-password.js'
+import { resetPasswordResponseSchema } from '../../schemas/auth/reset-password.js'
 import type {
   ResetPasswordRequestInput,
   ResetPasswordResponseParsed,
-} from '../schemas/auth/reset-password.js'
-import type { HttpClient } from './http-client.js'
-
-export const AuthPaths = {
-  REGISTER: '/v1/auth/register',
-  VERIFY_EMAIL: '/v1/auth/verify-email',
-  LOGIN: '/v1/auth/login',
-  REFRESH: '/v1/auth/refresh',
-  LOGOUT: '/v1/auth/logout',
-  FORGOT_PASSWORD: '/v1/auth/forgot-password',
-  RESET_PASSWORD: '/v1/auth/reset-password',
-} as const
+} from '../../schemas/auth/reset-password.js'
+import { RequestAuthMode } from '../_core/http-client.js'
+import type { HttpClient } from '../_core/http-client.js'
+import { AuthPaths } from './auth.paths.js'
 
 export interface AuthClient {
   register(input: RegisterRequestInput): Promise<RegisterResponseParsed>
@@ -51,6 +43,7 @@ export function createAuthClient(http: HttpClient): AuthClient {
         method: HttpMethod.POST,
         path: AuthPaths.REGISTER,
         body: input,
+        auth: RequestAuthMode.NONE,
         responseSchema: registerResponseSchema,
       }),
     verifyEmail: (input) =>
@@ -58,6 +51,7 @@ export function createAuthClient(http: HttpClient): AuthClient {
         method: HttpMethod.POST,
         path: AuthPaths.VERIFY_EMAIL,
         body: input,
+        auth: RequestAuthMode.NONE,
         responseSchema: verifyEmailResponseSchema,
       }),
     login: (input) =>
@@ -65,6 +59,7 @@ export function createAuthClient(http: HttpClient): AuthClient {
         method: HttpMethod.POST,
         path: AuthPaths.LOGIN,
         body: input,
+        auth: RequestAuthMode.NONE,
         responseSchema: loginResponseSchema,
       }),
     refresh: (input) =>
@@ -72,6 +67,7 @@ export function createAuthClient(http: HttpClient): AuthClient {
         method: HttpMethod.POST,
         path: AuthPaths.REFRESH,
         body: input,
+        auth: RequestAuthMode.NONE,
         responseSchema: refreshResponseSchema,
       }),
     logout: (input = {}) =>
@@ -86,6 +82,7 @@ export function createAuthClient(http: HttpClient): AuthClient {
         method: HttpMethod.POST,
         path: AuthPaths.FORGOT_PASSWORD,
         body: input,
+        auth: RequestAuthMode.NONE,
         responseSchema: forgotPasswordResponseSchema,
       }),
     resetPassword: (input) =>
@@ -93,6 +90,7 @@ export function createAuthClient(http: HttpClient): AuthClient {
         method: HttpMethod.POST,
         path: AuthPaths.RESET_PASSWORD,
         body: input,
+        auth: RequestAuthMode.NONE,
         responseSchema: resetPasswordResponseSchema,
       }),
   }

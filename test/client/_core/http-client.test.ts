@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
-import { ApiError, ClientErrorCode } from '../../src/client/api-error.js'
-import { createHttpClient } from '../../src/client/http-client.js'
-import { ErrorCode } from '../../src/enums/error-code.js'
-import { HttpMethod, HttpStatus } from '../../src/enums/http.js'
-import { jsonResponse, mockFetchResponse, recordedHeaders } from './fetch-mock.js'
+import { ApiError, ClientErrorCode } from '../../../src/client/_core/api-error.js'
+import { createHttpClient, RequestAuthMode } from '../../../src/client/_core/http-client.js'
+import { ErrorCode } from '../../../src/enums/error-code.js'
+import { HttpMethod, HttpStatus } from '../../../src/enums/http.js'
+import { noContentResponseSchema } from '../../../src/schemas/_shared/no-content.js'
+import { jsonResponse, mockFetchResponse, recordedHeaders } from '../fetch-mock.js'
 
 const BASE_URL = 'https://api.example.com'
 const pingSchema = z.object({ pong: z.boolean() })
@@ -161,5 +162,127 @@ describe('createHttpClient', () => {
 
     expect(error.code).toBe(ClientErrorCode.INVALID_RESPONSE)
     expect(error.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR)
+  })
+  it('replaces and URL-encodes path params', async () => {
+    const { fetch, calls } = mockFetchResponse(jsonResponse({ pong: true }))
+    const http = createHttpClient({ baseUrl: BASE_URL, getToken: () => null, fetch })
+
+    await http.request({
+      method: HttpMethod.GET,
+      path: '/v1/lists/:listId/items/:itemId',
+      pathParams: { listId: 'a b/c', itemId: 42 },
+      responseSchema: pingSchema,
+    })
+
+    expect(calls[0]?.url).toBe(`${BASE_URL}/v1/lists/a%20b%2Fc/items/42`)
+  })
+
+  it('throws before fetching when a path param is missing', async () => {
+    const { fetch } = mockFetchResponse(jsonResponse({ pong: true }))
+    const http = createHttpClient({ baseUrl: BASE_URL, getToken: () => null, fetch })
+
+    await expect(
+      http.request({ method: HttpMethod.GET, path: '/v1/lists/:id', responseSchema: pingSchema }),
+    ).rejects.toThrow('Missing path param "id" for /v1/lists/:id')
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it('serializes the query: skips nullish values, repeats array keys, keeps bracket keys', async () => {
+    const { fetch, calls } = mockFetchResponse(jsonResponse({ pong: true }))
+    const http = createHttpClient({ baseUrl: BASE_URL, getToken: () => null, fetch })
+
+    await http.request({
+      method: HttpMethod.GET,
+      path: '/v1/admin/users',
+      query: {
+        page: 2,
+        isBanned: false,
+        'email[ilike]': 'jane',
+        tag: ['a', 'b'],
+        sort: undefined,
+        role: null,
+      },
+      responseSchema: pingSchema,
+    })
+
+    const url = new URL(calls[0]?.url ?? '')
+    expect(url.pathname).toBe('/v1/admin/users')
+    expect(url.searchParams.get('page')).toBe('2')
+    expect(url.searchParams.get('isBanned')).toBe('false')
+    expect(url.searchParams.get('email[ilike]')).toBe('jane')
+    expect(url.searchParams.getAll('tag')).toEqual(['a', 'b'])
+    expect(url.searchParams.has('sort')).toBe(false)
+    expect(url.searchParams.has('role')).toBe(false)
+  })
+
+  it('appends no "?" when every query value is nullish', async () => {
+    const { fetch, calls } = mockFetchResponse(jsonResponse({ pong: true }))
+    const http = createHttpClient({ baseUrl: BASE_URL, getToken: () => null, fetch })
+
+    await http.request({
+      method: HttpMethod.GET,
+      path: '/v1/ping',
+      query: { sort: undefined },
+      responseSchema: pingSchema,
+    })
+
+    expect(calls[0]?.url).toBe(`${BASE_URL}/v1/ping`)
+  })
+
+  it('resolves a 204 No Content response to undefined', async () => {
+    const { fetch } = mockFetchResponse(new Response(null, { status: HttpStatus.NO_CONTENT }))
+    const http = createHttpClient({ baseUrl: BASE_URL, getToken: () => null, fetch })
+
+    await expect(
+      http.request({
+        method: HttpMethod.DELETE,
+        path: '/v1/reservations/:id',
+        pathParams: { id: 'r1' },
+        responseSchema: noContentResponseSchema,
+      }),
+    ).resolves.toBeUndefined()
+  })
+
+  it('skips getToken on a public request', async () => {
+    const { fetch, calls } = mockFetchResponse(jsonResponse({ pong: true }))
+    const http = createHttpClient({ baseUrl: BASE_URL, getToken: () => 'jwt-123', fetch })
+
+    await http.request({
+      method: HttpMethod.GET,
+      path: '/v1/ping',
+      auth: RequestAuthMode.NONE,
+      responseSchema: pingSchema,
+    })
+
+    expect(recordedHeaders(calls[0])).not.toHaveProperty('Authorization')
+  })
+
+  it('uses an explicit per-request token instead of getToken', async () => {
+    const { fetch, calls } = mockFetchResponse(jsonResponse({ pong: true }))
+    const http = createHttpClient({ baseUrl: BASE_URL, getToken: () => 'jwt-123', fetch })
+
+    await http.request({
+      method: HttpMethod.GET,
+      path: '/v1/ping',
+      auth: { token: 'rsv_abc' },
+      responseSchema: pingSchema,
+    })
+
+    expect(recordedHeaders(calls[0]).Authorization).toBe('Bearer rsv_abc')
+  })
+
+  it('forwards the abort signal to fetch', async () => {
+    const { fetch, calls } = mockFetchResponse(jsonResponse({ pong: true }))
+    const http = createHttpClient({ baseUrl: BASE_URL, getToken: () => null, fetch })
+    const controller = new AbortController()
+
+    await http.request({
+      method: HttpMethod.GET,
+      path: '/v1/ping',
+      signal: controller.signal,
+      responseSchema: pingSchema,
+    })
+
+    expect(calls[0]?.init.signal).toBe(controller.signal)
   })
 })

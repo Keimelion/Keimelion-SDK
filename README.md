@@ -7,11 +7,11 @@ enums, error codes and a typed `fetch`-based HTTP client. The API itself imports
 schemas from this package, and every consumer (frontend, Chrome extension, back-office)
 installs it from npm.
 
-| Subpath | Content |
-|---|---|
+| Subpath                  | Content                                                                                                                                                                           |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `@keimelion/sdk/schemas` | Zod request / response schemas + their `XInput` / `XParsed` types, shared primitives (pagination, password, username, slug, url, currency, sort), error envelope, refine messages |
-| `@keimelion/sdk/enums` | `ErrorCode`, `HttpStatus`, `HttpMethod`, `HttpHeader` and every domain enum (`UserRoles`, `ItemStatuses`, `SupportedCurrencies`…) |
-| `@keimelion/sdk/client` | `createClient`, `ApiError`, `HttpClient` |
+| `@keimelion/sdk/enums`   | `ErrorCode`, `HttpStatus`, `HttpMethod`, `HttpHeader` and every domain enum (`UserRoles`, `ItemStatuses`, `SupportedCurrencies`…)                                                 |
+| `@keimelion/sdk/client`  | `createClient`, `ApiError`, `HttpClient`                                                                                                                                          |
 
 Admin endpoints will live under `client.admin.*` in the same client (no separate subpath).
 
@@ -64,6 +64,42 @@ try {
   `message`, `metadata` and `issues` (`metadata.issues` of a 422, `[]` otherwise).
 - There is no automatic refresh / 401 interceptor in 0.x yet: call `client.auth.refresh()`
   yourself when an access token expires.
+
+### Picking only the domains you need
+
+`createClient()` instantiates every domain. A consumer that only needs a few (e.g. the
+extension) composes the core HTTP client with the domain factories, so bundlers drop the rest:
+
+```ts
+import { createAuthClient, createHttpClient } from '@keimelion/sdk/client'
+
+const http = createHttpClient({ baseUrl, getToken })
+const auth = createAuthClient(http)
+```
+
+### Client layout (for SDK contributors)
+
+```
+src/client/
+  _core/          http-client.ts, api-error.ts — transport, shared by every domain
+  <domain>/       <domain>.client.ts (createXClient(http)) + <domain>.paths.ts
+  admin/<res>/    one folder per admin resource, composed into client.admin.<res>
+  create-client.ts
+```
+
+A domain method describes its request declaratively; `HttpClient.request` does the rest:
+
+```ts
+http.request({
+  method: HttpMethod.GET,
+  path: '/v1/lists/:id', // `:name` segments are filled from pathParams, URL-encoded
+  pathParams: { id },
+  query: { page: 2, 'title[ilike]': 'xmas', tag: ['a', 'b'] }, // nullish values are skipped
+  auth: RequestAuthMode.NONE, // public route; or { token: 'rsv_…' } to bypass getToken
+  signal, // AbortSignal, forwarded to fetch
+  responseSchema: listDetailResponseSchema, // noContentResponseSchema for a 204
+})
+```
 
 ### Using the schemas
 
@@ -118,12 +154,12 @@ a husky `pre-commit` hook rejects a `file:.yalc` dependency or a staged `yalc.lo
 
 ## Scripts
 
-| Script | Role |
-|---|---|
-| `npm run build` | `tsup` (ESM + CJS + `.d.ts`), then zod-not-bundled check, `publint --strict`, `attw` |
-| `npm run lint` | ESLint (strict + stylistic type-checked, Node/server import guard) + schema type-export check |
-| `npm run typecheck` | `tsc --noEmit` (strict, no `@types/node`) |
-| `npm test` | Vitest |
+| Script                    | Role                                                                                                                  |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `npm run build`           | `tsup` (ESM + CJS + `.d.ts`), then zod-not-bundled check, `publint --strict`, `attw`                                  |
+| `npm run lint`            | ESLint (strict + stylistic type-checked, Node/server import guard) + schema type-export check                         |
+| `npm run typecheck`       | `tsc --noEmit` (strict, no `@types/node`)                                                                             |
+| `npm test`                | Vitest                                                                                                                |
 | `npm run test:pack [dir]` | `npm pack`, install the tarball + zod in a scratch project, import every subpath from ESM and CJS and type-check both |
 
 ## Release

@@ -1,5 +1,5 @@
-import { validationErrorMetadataSchema } from '../schemas/_shared/error.js'
-import type { ValidationIssueParsed } from '../schemas/_shared/error.js'
+import { validationErrorMetadataSchema } from '../../schemas/_shared/error.js'
+import type { ValidationIssueParsed } from '../../schemas/_shared/error.js'
 
 export const ClientErrorCode = {
   INVALID_RESPONSE: 'INVALID_RESPONSE',
