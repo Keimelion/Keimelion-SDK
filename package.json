@@ -1,6 +1,6 @@
 {
   "name": "@keimelion/sdk",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Official TypeScript SDK for the Keimelion API: contract schemas, enums and HTTP client",
   "license": "MIT",
   "author": "Keimelion",
