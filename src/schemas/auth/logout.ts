@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { messageResponseSchema } from '../shared/message-response.js'
+import { messageResponseSchema } from '../_shared/message-response.js'
 
 export const logoutRequestSchema = z.object({
   refreshToken: z.string().min(1).optional(),

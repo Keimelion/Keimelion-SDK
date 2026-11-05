@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { messageResponseSchema } from '../shared/message-response.js'
-import { emailSchema } from './email.js'
+import { messageResponseSchema } from '../_shared/message-response.js'
+import { emailSchema } from '../_shared/email.js'
 
 export const forgotPasswordRequestSchema = z.object({
   email: emailSchema,

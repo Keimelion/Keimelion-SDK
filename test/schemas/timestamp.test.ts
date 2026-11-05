@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
-import { isoDateTimeSchema } from '../../src/schemas/shared/timestamp.js'
+import { isoDateTimeSchema } from '../../src/schemas/_shared/timestamp.js'
 import { CREATED_AT_ISO } from '../fixtures.js'
 
 describe('isoDateTimeSchema', () => {

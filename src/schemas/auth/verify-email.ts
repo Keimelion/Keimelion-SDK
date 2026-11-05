@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { messageResponseSchema } from '../shared/message-response.js'
+import { messageResponseSchema } from '../_shared/message-response.js'
 
 export const verifyEmailRequestSchema = z.object({
   token: z.guid(),

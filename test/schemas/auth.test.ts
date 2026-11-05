@@ -16,12 +16,18 @@ import {
 } from '../../src/schemas/auth/register.js'
 import { resetPasswordRequestSchema } from '../../src/schemas/auth/reset-password.js'
 import { verifyEmailRequestSchema } from '../../src/schemas/auth/verify-email.js'
-import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH } from '../../src/schemas/shared/password.js'
+import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH } from '../../src/schemas/_shared/password.js'
 import { buildImageDetailWire, buildUserDetailWire, UPDATED_AT_ISO } from '../fixtures.js'
 
 describe('loginRequestSchema', () => {
   it('normalises the email to lowercase', () => {
     const parsed = loginRequestSchema.parse({ email: 'Jane@Example.COM', password: 'secret' })
+
+    expect(parsed.email).toBe('jane@example.com')
+  })
+
+  it('trims surrounding whitespace before validating the email', () => {
+    const parsed = loginRequestSchema.parse({ email: '  Jane@Example.COM ', password: 'secret' })
 
     expect(parsed.email).toBe('jane@example.com')
   })

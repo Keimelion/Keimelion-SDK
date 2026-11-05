@@ -1,9 +1,9 @@
 import { z } from 'zod'
-import { passwordSchema } from '../shared/password.js'
-import { usernameSchema } from '../shared/username.js'
-import { supportedCurrencyEnum } from '../shared/currency.js'
+import { passwordSchema } from '../_shared/password.js'
+import { usernameSchema } from '../_shared/username.js'
+import { supportedCurrencyEnum } from '../_shared/currency.js'
 import { userDetailSchema } from '../users/user-detail.js'
-import { emailSchema } from './email.js'
+import { emailSchema } from '../_shared/email.js'
 
 const optionalUsernameSchema = usernameSchema
   .nullable()

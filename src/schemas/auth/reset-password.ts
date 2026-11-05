@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { passwordSchema } from '../shared/password.js'
-import { messageResponseSchema } from '../shared/message-response.js'
+import { passwordSchema } from '../_shared/password.js'
+import { messageResponseSchema } from '../_shared/message-response.js'
 
 export const resetPasswordRequestSchema = z.object({
   passwordResetToken: z.string().min(1),

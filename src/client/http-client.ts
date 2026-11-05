@@ -1,7 +1,7 @@
 import type { z } from 'zod'
 import { HttpHeader } from '../enums/http.js'
 import type { HttpMethod } from '../enums/http.js'
-import { apiErrorBodySchema } from '../schemas/shared/error.js'
+import { apiErrorBodySchema } from '../schemas/_shared/error.js'
 import { ApiError, createInvalidResponseError } from './api-error.js'
 
 const JSON_CONTENT_TYPE = 'application/json'
