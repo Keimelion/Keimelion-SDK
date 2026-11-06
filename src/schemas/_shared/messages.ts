@@ -44,3 +44,7 @@ export const RESERVATION_REQUIRES_RESERVER_NAME_MESSAGE =
 
 export const RESERVATION_INCONSISTENT_INTENT_MESSAGE =
   'Only the list owner may reserve on behalf of someone else (reserverName)'
+
+export const REPORT_TARGET_NOT_FOUND_MESSAGE = 'The reported user, list or item does not exist'
+
+export const REPORT_NOT_FOUND_MESSAGE = 'Report not found'
