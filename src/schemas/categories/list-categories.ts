@@ -1,14 +1,17 @@
 import { z } from 'zod'
 import { categorySummarySchema } from '../_shared/category-summary.js'
+import type { CategorySummaryInput, CategorySummaryParsed } from '../_shared/category-summary.js'
 
-export const categoryTreeNodeSchema = categorySummarySchema.extend({
-  get children() {
-    return z.array(categoryTreeNodeSchema)
-  },
-})
+export type CategoryTreeNodeInput = CategorySummaryInput & { children: CategoryTreeNodeInput[] }
+export type CategoryTreeNodeParsed = CategorySummaryParsed & { children: CategoryTreeNodeParsed[] }
 
-export type CategoryTreeNodeInput = z.input<typeof categoryTreeNodeSchema>
-export type CategoryTreeNodeParsed = z.output<typeof categoryTreeNodeSchema>
+// Annotated by hand: an inferred recursive schema type is elided to `any` in the emitted .d.ts.
+export const categoryTreeNodeSchema: z.ZodType<CategoryTreeNodeParsed, CategoryTreeNodeInput> =
+  categorySummarySchema.extend({
+    get children() {
+      return z.array(categoryTreeNodeSchema)
+    },
+  })
 
 export const categoriesListResponseSchema = z.object({
   categories: z.array(categoryTreeNodeSchema),
