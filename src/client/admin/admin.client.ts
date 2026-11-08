@@ -18,6 +18,8 @@ import { createAdminReservationsClient } from './reservations/admin-reservations
 import type { AdminReservationsClient } from './reservations/admin-reservations.client.js'
 import { createAdminCollaboratorInvitesClient } from './collaborator-invites/admin-collaborator-invites.client.js'
 import type { AdminCollaboratorInvitesClient } from './collaborator-invites/admin-collaborator-invites.client.js'
+import { createAdminReportsClient } from './reports/admin-reports.client.js'
+import type { AdminReportsClient } from './reports/admin-reports.client.js'
 import type { HttpClient } from '../_core/http-client.js'
 
 export interface AdminClient {
@@ -31,6 +33,7 @@ export interface AdminClient {
   feedback: AdminFeedbackClient
   reservations: AdminReservationsClient
   collaboratorInvites: AdminCollaboratorInvitesClient
+  reports: AdminReportsClient
 }
 
 export function createAdminClient(http: HttpClient): AdminClient {
@@ -45,5 +48,6 @@ export function createAdminClient(http: HttpClient): AdminClient {
     feedback: createAdminFeedbackClient(http),
     reservations: createAdminReservationsClient(http),
     collaboratorInvites: createAdminCollaboratorInvitesClient(http),
+    reports: createAdminReportsClient(http),
   }
 }

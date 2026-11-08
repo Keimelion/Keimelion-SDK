@@ -17,6 +17,7 @@ import { listsUpdateResponseSchema } from '../../../src/schemas/lists/update-lis
 import { occasionTypesListResponseSchema } from '../../../src/schemas/occasion-types/list-occasion-types.js'
 import { publicListsGetResponseSchema } from '../../../src/schemas/public/get-public-list.js'
 import { reservationsCreateResponseSchema } from '../../../src/schemas/reservations/create-reservation.js'
+import { reportsCreateResponseSchema } from '../../../src/schemas/reports/create-report.js'
 import { reservationsGetResponseSchema } from '../../../src/schemas/reservations/get-reservation.js'
 import { tagsListResponseSchema } from '../../../src/schemas/tags/list-tags.js'
 import { usersGetProfileResponseSchema } from '../../../src/schemas/users/get-profile.js'
@@ -33,6 +34,7 @@ import {
   buildItemWithSourcesWire,
   buildListDetailWire,
   buildListItemDetailWire,
+  buildReportDetailWire,
   buildReservationDetailWire,
   buildTagSummaryWire,
   buildUserDetailWire,
@@ -307,6 +309,14 @@ export const USER_FACING_CASES: EndpointCase[] = [
     schema: feedbackCreateResponseSchema,
     status: 201,
     body: { title: 'Bug', description: 'It broke' },
+  },
+  {
+    id: 'POST /v1/reports',
+    call: (client) => client.reports.create({ targetType: 'list', targetId: ID, reason: 'spam' }),
+    wire: { report: buildReportDetailWire() },
+    schema: reportsCreateResponseSchema,
+    status: 201,
+    body: { targetType: 'list', targetId: ID, reason: 'spam' },
   },
   {
     id: 'GET /v1/public/lists/:slug',

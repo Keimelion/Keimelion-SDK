@@ -17,7 +17,7 @@ Every API endpoint is reachable from the same client: user-facing domains on `cl
 (`lists`, `collaborators`, `listItems`, `items`, `categories`, `occasionTypes`, `tags`, `users`,
 `reservations`, `feedback`, `public`, `health`, `auth`, `reports`) and admin resources on
 `client.admin.<resource>` (`users`, `lists`, `items`, `categories`, `shops`, `tags`,
-`occasionTypes`, `feedback`, `reservations`, `collaboratorInvites`).
+`occasionTypes`, `feedback`, `reservations`, `collaboratorInvites`, `reports`).
 
 Runs in browsers, Node.js ≥ 20 and MV3 service workers: the sources never import Node-only
 modules, an ORM, an HTTP framework or a DB driver (enforced by ESLint in CI).
@@ -100,7 +100,7 @@ const client = createClient({
 
 ### File uploads and downloads
 
-`client.items.create/update`, `client.admin.items.create/update` and
+`client.auth.register`, `client.items.create/update`, `client.admin.items.create/update` and
 `client.users.updateProfile` take the JSON input or a `FormData`, sent as multipart. The file
 goes in the `image` field, arrays are JSON-encoded strings and booleans are `'true'` /
 `'false'`:
@@ -131,6 +131,11 @@ await client.admin.users.list({
   'deletedAt[isNull]': 'true',
 })
 ```
+
+Sort fields and filter operators are exported per resource (`ADMIN_REPORTS_SORT_FIELDS`,
+`ADMIN_REPORTS_FILTERS`, `AdminReportsListFilters`…). `GET /v1/lists` and
+`GET /v1/users/me/reservations` only sort (`LIST_SORT_FIELDS`, `RESERVATION_SORT_FIELDS`), and
+`client.admin.reservations.list` filters through plain query params (`userId`, `listId`…).
 
 ### Anonymous reservations
 

@@ -34,6 +34,11 @@ import {
   adminReservationsListResponseSchema,
 } from '../../../src/schemas/admin/reservations/admin-reservation-detail.js'
 import {
+  adminReportsGetResponseSchema,
+  adminReportsListResponseSchema,
+} from '../../../src/schemas/admin/reports/admin-report-detail.js'
+import { adminReportsUpdateResponseSchema } from '../../../src/schemas/admin/reports/update-report.js'
+import {
   adminShopsGetResponseSchema,
   adminShopsListResponseSchema,
 } from '../../../src/schemas/admin/shops/admin-shop-detail.js'
@@ -61,6 +66,7 @@ import {
   buildListDetailWire,
   buildListItemDetailWire,
   buildListMemberWire,
+  buildReportDetailWire,
   buildReservationDetailWire,
   buildShopSummaryWire,
   buildTagSummaryWire,
@@ -130,6 +136,18 @@ function buildAdminOccasionTypeWire(): object {
     isActive: true,
     translations: [{ locale: 'en', label: 'Birthday' }],
     ...TIMESTAMPS,
+  }
+}
+
+function buildAdminReportWire(): object {
+  return {
+    ...buildReportDetailWire(),
+    reporter: { id: ID, username: 'jane' },
+    targetSnapshot: { id: ID, name: 'Suspicious item' },
+    targetImageId: null,
+    adminNote: null,
+    reviewedByUserId: null,
+    reviewedAt: null,
   }
 }
 
@@ -487,5 +505,38 @@ export const ADMIN_CASES: EndpointCase[] = [
     }),
     schema: adminCollaboratorInvitesListResponseSchema,
     query: { inviteStatus: 'pending' },
+  },
+  {
+    id: 'GET /v1/admin/reports',
+    call: (client) =>
+      client.admin.reports.list({
+        sort: 'status:asc',
+        'status[in][]': ['pending'],
+        'targetId[eq]': ID,
+        'userId[isNull]': 'true',
+        'createdAt[between][]': ['2026-01-01T00:00:00Z', '2026-02-01T00:00:00Z'],
+      }),
+    wire: paginated(buildAdminReportWire()),
+    schema: adminReportsListResponseSchema,
+    query: {
+      sort: 'status:asc',
+      'status[in][]': ['pending'],
+      'targetId[eq]': ID,
+      'userId[isNull]': 'true',
+      'createdAt[between][]': ['2026-01-01T00:00:00Z', '2026-02-01T00:00:00Z'],
+    },
+  },
+  {
+    id: 'GET /v1/admin/reports/:id',
+    call: (client) => client.admin.reports.get(ID),
+    wire: { report: buildAdminReportWire() },
+    schema: adminReportsGetResponseSchema,
+  },
+  {
+    id: 'PATCH /v1/admin/reports/:id',
+    call: (client) => client.admin.reports.update(ID, { status: 'upheld', adminNote: null }),
+    wire: { report: buildAdminReportWire() },
+    schema: adminReportsUpdateResponseSchema,
+    body: { status: 'upheld', adminNote: null },
   },
 ]

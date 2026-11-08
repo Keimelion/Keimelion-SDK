@@ -13,6 +13,7 @@ import type {
   ListMemberSummaryInput,
 } from '../src/schemas/_shared/list-member.js'
 import type { ReservationDetailInput } from '../src/schemas/_shared/reservation-detail.js'
+import type { ReportDetailInput } from '../src/schemas/reports/report-detail.js'
 import type { ShopSummaryInput } from '../src/schemas/_shared/shop-summary.js'
 import type { TagSummaryInput } from '../src/schemas/_shared/tag-summary.js'
 import type { UserDetailInput } from '../src/schemas/_shared/user-detail.js'
@@ -183,6 +184,19 @@ export function buildFeedbackDetailWire(): FeedbackDetailInput {
     description: 'It broke',
     context: { page: '/lists' },
     status: 'open',
+    ...TIMESTAMPS,
+  }
+}
+
+export function buildReportDetailWire(): ReportDetailInput {
+  return {
+    id: ID,
+    userId: ID,
+    targetType: 'item',
+    targetId: SOURCE_ID,
+    reason: 'spam',
+    description: null,
+    status: 'pending',
     ...TIMESTAMPS,
   }
 }

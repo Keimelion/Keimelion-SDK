@@ -4,7 +4,7 @@ import { createClient } from '../../src/client/create-client.js'
 import type { KeimelionClient } from '../../src/client/create-client.js'
 import { ErrorCode } from '../../src/enums/error-code.js'
 import { HttpStatus } from '../../src/enums/http.js'
-import { ID, SOURCE_ID } from '../fixtures.js'
+import { buildUserDetailWire, ID, SOURCE_ID } from '../fixtures.js'
 import { ADMIN_CASES } from './cases/admin.cases.js'
 import type { EndpointCase } from './cases/endpoint-case.js'
 import { USER_FACING_CASES } from './cases/user-facing.cases.js'
@@ -13,8 +13,8 @@ import type { RecordedRequest } from './fetch-mock.js'
 
 const BASE_URL = 'https://api.example.com'
 const TOKEN = 'jwt-token'
-const USER_FACING_ENDPOINT_COUNT = 30
-const ADMIN_ENDPOINT_COUNT = 44
+const USER_FACING_ENDPOINT_COUNT = 31
+const ADMIN_ENDPOINT_COUNT = 47
 const EXPORT_ENDPOINT = 'GET /v1/users/me/export'
 const NOT_FOUND_BODY = { message: 'Resource not found', code: ErrorCode.NOT_FOUND, metadata: {} }
 
@@ -106,7 +106,7 @@ describe.each(
 })
 
 describe('endpoint inventory', () => {
-  it('covers the 30 user-facing and 44 admin endpoints exactly once', () => {
+  it('covers the 31 user-facing and 47 admin endpoints exactly once', () => {
     const userFacing = new Set([
       ...USER_FACING_CASES.map((testCase) => testCase.id),
       EXPORT_ENDPOINT,
@@ -170,6 +170,11 @@ describe('multipart endpoints', () => {
     USER_FACING_CASES.find((testCase) => testCase.id === 'GET /v1/users/me')?.wire ?? {}
 
   it.each<[string, object, (client: KeimelionClient, form: FormData) => Promise<unknown>]>([
+    [
+      'POST /v1/auth/register',
+      { user: buildUserDetailWire(), refreshToken: 'refresh' },
+      (client, form) => client.auth.register(form),
+    ],
     ['POST /v1/items', itemWire, (client, form) => client.items.create(form)],
     ['PATCH /v1/items/:id', itemWire, (client, form) => client.items.update(ID, form)],
     ['PATCH /v1/users/me', profileWire, (client, form) => client.users.updateProfile(form)],
