@@ -1,10 +1,12 @@
 name: Release
 
 # main only moves through release PRs (dev → main, merge commit): CI → semantic-release → npm publish.
+# dev: CI → prerelease on the npm `dev` dist-tag. Same file as main because npm Trusted Publishing
+# is bound to this workflow filename.
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
 
 permissions:
   contents: read
@@ -15,6 +17,7 @@ jobs:
 
   release:
     needs: ci
+    if: github.ref == 'refs/heads/main'
     permissions:
       contents: write
       issues: write
@@ -32,3 +35,11 @@ jobs:
     with:
       version: ${{ needs.release.outputs.version }}
     secrets: inherit
+
+  publish-dev:
+    needs: ci
+    if: github.ref == 'refs/heads/dev'
+    permissions:
+      contents: read
+      id-token: write
+    uses: Keimelion/Keimelion-Infra/.github/workflows/npm-publish-dev.yml@main
