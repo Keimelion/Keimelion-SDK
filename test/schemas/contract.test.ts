@@ -1,4 +1,5 @@
 import { describe, expect, expectTypeOf, it } from 'vitest'
+import type { z } from 'zod'
 import * as schemas from '../../src/schemas/index.js'
 import {
   CREATED_AT_ISO,
@@ -11,6 +12,16 @@ import {
 } from '../fixtures.js'
 
 const OTHER_ID = '33333333-3333-4333-8333-333333333333'
+
+const FILTERS_BY_ENDPOINT: Record<string, schemas.AdminFilterConfig> = {
+  'GET /v1/admin/users': schemas.ADMIN_USERS_FILTERS,
+  'GET /v1/admin/lists': schemas.ADMIN_LISTS_FILTERS,
+  'GET /v1/admin/items': schemas.ADMIN_ITEMS_FILTERS,
+  'GET /v1/admin/shops': schemas.ADMIN_SHOPS_FILTERS,
+  'GET /v1/admin/tags': schemas.ADMIN_TAGS_FILTERS,
+  'GET /v1/admin/feedback': schemas.ADMIN_FEEDBACK_FILTERS,
+  'GET /v1/admin/reports': schemas.ADMIN_REPORTS_FILTERS,
+}
 
 describe('response conventions', () => {
   it('decodes *_at timestamps into Dates and keeps nullable ones null', () => {
@@ -154,9 +165,136 @@ describe('query schemas', () => {
     expectTypeOf<schemas.AdminUsersListFilters>().not.toHaveProperty('role[in]')
   })
 
+  it('types the admin reports filters from the declared operators', () => {
+    expectTypeOf<{ 'targetType[in][]': string[] }>().toExtend<schemas.AdminReportsListFilters>()
+    expectTypeOf<{ 'targetId[eq]': string }>().toExtend<schemas.AdminReportsListFilters>()
+    expectTypeOf<schemas.AdminReportsListFilters>().not.toHaveProperty('targetId[in][]')
+    expectTypeOf<schemas.AdminReportsListFilters>().not.toHaveProperty('reason[ilike]')
+  })
+
   it('defaults the export format to json and rejects an unknown one', () => {
     expect(schemas.usersExportQuerySchema.parse({}).format).toBe('json')
     expect(schemas.usersExportQuerySchema.safeParse({ format: 'xml' }).success).toBe(false)
+  })
+})
+
+// Mirrors the `sortable` / `filterable` of each API entity: a change on either side must be
+// deliberate. Filters are `null` on routes that never call `validateFilters`.
+describe.each<[string, z.ZodType, readonly string[], Record<string, readonly string[]> | null]>([
+  [
+    'GET /v1/lists',
+    schemas.listsListQuerySchema,
+    ['createdAt', 'updatedAt', 'title', 'listStatus'],
+    null,
+  ],
+  [
+    'GET /v1/users/me/reservations',
+    schemas.usersListReservationsQuerySchema,
+    ['createdAt', 'quantityBooked'],
+    null,
+  ],
+  [
+    'GET /v1/admin/reservations',
+    schemas.adminReservationsListQuerySchema,
+    ['createdAt', 'quantityBooked'],
+    null,
+  ],
+  [
+    'GET /v1/admin/users',
+    schemas.adminUsersListQuerySchema,
+    ['createdAt', 'email', 'username', 'lastActiveAt'],
+    {
+      id: ['eq', 'in'],
+      email: ['eq', 'ilike'],
+      username: ['eq', 'ilike'],
+      createdAt: ['gte', 'lte', 'between'],
+      bannedAt: ['isNull'],
+      deletedAt: ['isNull'],
+      role: ['eq', 'in'],
+    },
+  ],
+  [
+    'GET /v1/admin/lists',
+    schemas.adminListsListQuerySchema,
+    ['createdAt', 'updatedAt', 'title', 'listStatus'],
+    {
+      id: ['eq', 'in'],
+      title: ['eq', 'ilike'],
+      listStatus: ['eq', 'in'],
+      occasionTypeId: ['eq', 'isNull'],
+      createdAt: ['gte', 'lte', 'between'],
+      updatedAt: ['gte', 'lte', 'between'],
+      deletedAt: ['isNull'],
+    },
+  ],
+  [
+    'GET /v1/admin/items',
+    schemas.adminItemsListQuerySchema,
+    ['name', 'createdAt', 'updatedAt'],
+    {
+      id: ['eq', 'in'],
+      name: ['eq', 'ilike'],
+      createdByUserId: ['eq', 'isNull'],
+      createdAt: ['gte', 'lte', 'between'],
+    },
+  ],
+  [
+    'GET /v1/admin/shops',
+    schemas.adminShopsListQuerySchema,
+    ['name', 'slug', 'sortOrder', 'createdAt', 'updatedAt'],
+    {
+      name: ['eq', 'ilike'],
+      slug: ['eq', 'ilike'],
+      domain: ['eq', 'ilike', 'isNull'],
+      isActive: ['eq'],
+      isAffiliated: ['eq'],
+    },
+  ],
+  [
+    'GET /v1/admin/tags',
+    schemas.adminTagsListQuerySchema,
+    ['name', 'slug', 'createdAt', 'updatedAt'],
+    {
+      name: ['eq', 'ilike'],
+      slug: ['eq', 'ilike'],
+      createdByUserId: ['eq', 'isNull'],
+    },
+  ],
+  [
+    'GET /v1/admin/feedback',
+    schemas.adminFeedbackListQuerySchema,
+    ['createdAt', 'updatedAt', 'status'],
+    {
+      status: ['eq', 'in'],
+      userId: ['eq', 'isNull'],
+      title: ['ilike'],
+      createdAt: ['gte', 'lte', 'between'],
+    },
+  ],
+  [
+    'GET /v1/admin/reports',
+    schemas.adminReportsListQuerySchema,
+    ['createdAt', 'updatedAt', 'status'],
+    {
+      status: ['eq', 'in'],
+      targetType: ['eq', 'in'],
+      targetId: ['eq'],
+      reason: ['eq', 'in'],
+      userId: ['eq', 'isNull'],
+      createdAt: ['gte', 'lte', 'between'],
+    },
+  ],
+])('%s sort and filters', (id, querySchema, sortFields, filters) => {
+  it.each(sortFields)('accepts sort on %s', (field) => {
+    expect(querySchema.safeParse({ sort: `${field}:desc` }).success).toBe(true)
+  })
+
+  it('rejects a sort field the API does not declare', () => {
+    expect(querySchema.safeParse({ sort: 'notSortable:asc' }).success).toBe(false)
+  })
+
+  it('exposes exactly the operators the API declares', () => {
+    expect(FILTERS_BY_ENDPOINT[id] ?? null).toEqual(filters)
   })
 })
 
