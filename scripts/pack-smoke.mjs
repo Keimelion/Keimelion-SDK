@@ -69,7 +69,7 @@ function buildRuntimeProbe(importLine) {
 }
 
 function buildTypeProbe() {
-  return `import { loginResponseSchema, type LoginResponseParsed } from '@keimelion/sdk/schemas'
+  return `import { categoriesListResponseSchema, loginResponseSchema, type LoginResponseParsed } from '@keimelion/sdk/schemas'
 import { ErrorCode } from '@keimelion/sdk/enums'
 import { createClient, ApiError } from '@keimelion/sdk/client'
 
@@ -79,7 +79,9 @@ const createdAt: Date | undefined = loginResponseSchema.safeParse({}).data?.user
 const unauthorized: 'UNAUTHORIZED' = ErrorCode.UNAUTHORIZED
 const adminUsers = client.admin.users.list({ 'email[ilike]': 'jane', 'role[in][]': ['user'] })
 const listTitle: Promise<string | undefined> = client.lists.get('id').then(({ list }) => list.title)
-export const probes = [loginCall, createdAt, unauthorized, ApiError, adminUsers, listTitle]
+const nestedCategoryDepth: number | undefined =
+  categoriesListResponseSchema.safeParse({}).data?.categories[0]?.children[0]?.children[0]?.depth
+export const probes = [loginCall, createdAt, unauthorized, ApiError, adminUsers, listTitle, nestedCategoryDepth]
 `
 }
 
