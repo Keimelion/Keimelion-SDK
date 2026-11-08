@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { passwordSchema } from '../_shared/password.js'
 import { usernameSchema } from '../_shared/username.js'
 import { supportedCurrencyEnum } from '../_shared/currency.js'
-import { userDetailSchema } from '../users/user-detail.js'
+import { userDetailSchema } from '../_shared/user-detail.js'
 import { emailSchema } from '../_shared/email.js'
 
 const optionalUsernameSchema = usernameSchema
