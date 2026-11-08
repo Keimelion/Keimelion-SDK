@@ -113,6 +113,10 @@ describe('adminReportsUpdateRequestSchema', () => {
     expect(parsed).toEqual({ adminNote: null })
   })
 
+  it('rejects moving a report back to pending', () => {
+    expect(adminReportsUpdateRequestSchema.safeParse({ status: 'pending' }).success).toBe(false)
+  })
+
   it('rejects an unknown status, an oversized note and unknown keys', () => {
     expect(adminReportsUpdateRequestSchema.safeParse({ status: 'approved' }).success).toBe(false)
     expect(
