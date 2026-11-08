@@ -1,5 +1,7 @@
 import { createAuthClient } from './auth/auth.client.js'
 import type { AuthClient } from './auth/auth.client.js'
+import { createReportsClient } from './reports/reports.client.js'
+import type { ReportsClient } from './reports/reports.client.js'
 import { createHttpClient } from './_core/http-client.js'
 import type { HttpClient, HttpClientOptions } from './_core/http-client.js'
 
@@ -10,6 +12,7 @@ export type CreateClientOptions = HttpClientOptions
 export interface KeimelionClient {
   http: HttpClient
   auth: AuthClient
+  reports: ReportsClient
 }
 
 export function createClient(options: CreateClientOptions): KeimelionClient {
@@ -17,5 +20,6 @@ export function createClient(options: CreateClientOptions): KeimelionClient {
   return {
     http,
     auth: createAuthClient(http),
+    reports: createReportsClient(http),
   }
 }
