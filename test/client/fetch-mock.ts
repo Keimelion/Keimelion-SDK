@@ -18,6 +18,20 @@ export function mockFetchResponse(response: Response): {
   return { fetch, calls }
 }
 
+// Answers each call from a handler, for flows that send several requests (retry, refresh…).
+export function mockFetchHandler(handler: (call: RecordedRequest) => Response): {
+  fetch: FetchFunction
+  calls: RecordedRequest[]
+} {
+  const calls: RecordedRequest[] = []
+  const fetch = vi.fn<FetchFunction>((url, init) => {
+    const call = { url, init }
+    calls.push(call)
+    return Promise.resolve(handler(call))
+  })
+  return { fetch, calls }
+}
+
 export function jsonResponse(body: unknown, status = 200): Response {
   return Response.json(body, { status })
 }

@@ -6,7 +6,12 @@ import { createHttpClient, RequestAuthMode } from '../../../src/client/_core/htt
 import { ErrorCode } from '../../../src/enums/error-code.js'
 import { HttpMethod, HttpStatus } from '../../../src/enums/http.js'
 import { noContentResponseSchema } from '../../../src/schemas/_shared/no-content.js'
-import { jsonResponse, mockFetchResponse, recordedHeaders } from '../fetch-mock.js'
+import {
+  jsonResponse,
+  mockFetchHandler,
+  mockFetchResponse,
+  recordedHeaders,
+} from '../fetch-mock.js'
 
 const BASE_URL = 'https://api.example.com'
 const pingSchema = z.object({ pong: z.boolean() })
@@ -373,5 +378,271 @@ describe('createHttpClient', () => {
     expectTypeOf<typeof ClientErrorCode.INVALID_RESPONSE>().toExtend<ApiErrorCode>()
     expectTypeOf<string>().toExtend<ApiErrorCode>()
     expectTypeOf<ApiError['code']>().toEqualTypeOf<ApiErrorCode>()
+  })
+
+  it('sends FormData as-is and lets the runtime set the multipart Content-Type', async () => {
+    const { fetch, calls } = mockFetchResponse(jsonResponse({ pong: true }))
+    const http = createHttpClient({ baseUrl: BASE_URL, getToken: () => null, fetch })
+    const form = new FormData()
+    form.set('name', 'x')
+
+    await http.request({
+      method: HttpMethod.POST,
+      path: '/v1/ping',
+      body: form,
+      responseSchema: pingSchema,
+    })
+
+    expect(calls[0]?.init.body).toBe(form)
+    expect(recordedHeaders(calls[0])).not.toHaveProperty('Content-Type')
+  })
+
+  describe('requestBlob', () => {
+    it('returns the raw body and accepts any content type', async () => {
+      const { fetch, calls } = mockFetchResponse(new Response('raw-bytes'))
+      const http = createHttpClient({ baseUrl: BASE_URL, getToken: () => null, fetch })
+
+      const blob = await http.requestBlob({ method: HttpMethod.GET, path: '/v1/file' })
+
+      expect(await blob.text()).toBe('raw-bytes')
+      expect(recordedHeaders(calls[0]).Accept).toBe('*/*')
+    })
+
+    it('maps a transport failure while reading the body', async () => {
+      const failingBody = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.error(new TypeError('connection lost'))
+        },
+      })
+      const { fetch } = mockFetchResponse(new Response(failingBody))
+      const http = createHttpClient({ baseUrl: BASE_URL, getToken: () => null, fetch })
+
+      const error = await captureError(
+        http.requestBlob({ method: HttpMethod.GET, path: '/v1/file' }),
+      )
+
+      expect(error.code).toBe(ClientErrorCode.NETWORK_ERROR)
+    })
+  })
+
+  describe('onUnauthorized', () => {
+    const UNAUTHORIZED_BODY = {
+      message: 'Unauthorized',
+      code: ErrorCode.UNAUTHORIZED,
+      metadata: {},
+    }
+    const FRESH_TOKEN = 'fresh'
+    const pingRequest = {
+      method: HttpMethod.GET,
+      path: '/v1/ping',
+      responseSchema: pingSchema,
+    }
+
+    // Accepts only the fresh token, like the API once the old access token has expired.
+    function tokenAwareFetch(): ReturnType<typeof mockFetchHandler> {
+      return mockFetchHandler((call) =>
+        recordedHeaders(call).Authorization === `Bearer ${FRESH_TOKEN}`
+          ? jsonResponse({ pong: true })
+          : jsonResponse(UNAUTHORIZED_BODY, HttpStatus.UNAUTHORIZED),
+      )
+    }
+
+    it('refreshes once for concurrent 401s and retries each request once', async () => {
+      let token = 'expired'
+      let refreshCalls = 0
+      const { fetch, calls } = tokenAwareFetch()
+      const http = createHttpClient({
+        baseUrl: BASE_URL,
+        getToken: () => token,
+        fetch,
+        onUnauthorized: async () => {
+          refreshCalls += 1
+          await Promise.resolve()
+          token = FRESH_TOKEN
+          return true
+        },
+      })
+
+      const results = await Promise.all([
+        http.request(pingRequest),
+        http.request(pingRequest),
+        http.request(pingRequest),
+      ])
+
+      expect(results).toEqual([{ pong: true }, { pong: true }, { pong: true }])
+      expect(refreshCalls).toBe(1)
+      expect(calls).toHaveLength(6)
+      expect(recordedHeaders(calls[5]).Authorization).toBe(`Bearer ${FRESH_TOKEN}`)
+    })
+
+    it('does not refresh again for a 401 that lands after the refresh finished', async () => {
+      let token = FRESH_TOKEN
+      let refreshCalls = 0
+      const { fetch, calls } = mockFetchHandler((call) =>
+        recordedHeaders(call).Authorization === 'Bearer stale'
+          ? jsonResponse(UNAUTHORIZED_BODY, HttpStatus.UNAUTHORIZED)
+          : jsonResponse({ pong: true }),
+      )
+      const http = createHttpClient({
+        baseUrl: BASE_URL,
+        getToken: () => {
+          const current = token
+          token = FRESH_TOKEN
+          return current
+        },
+        fetch,
+        onUnauthorized: () => {
+          refreshCalls += 1
+          return true
+        },
+      })
+      token = 'stale'
+
+      await expect(http.request(pingRequest)).resolves.toEqual({ pong: true })
+
+      expect(refreshCalls).toBe(0)
+      expect(calls).toHaveLength(2)
+    })
+
+    it('surfaces the 401 of the retry instead of looping', async () => {
+      let refreshCalls = 0
+      const { fetch, calls } = mockFetchHandler(() =>
+        jsonResponse(UNAUTHORIZED_BODY, HttpStatus.UNAUTHORIZED),
+      )
+      const http = createHttpClient({
+        baseUrl: BASE_URL,
+        getToken: () => 'token',
+        fetch,
+        onUnauthorized: () => {
+          refreshCalls += 1
+          return true
+        },
+      })
+
+      const error = await captureError(http.request(pingRequest))
+
+      expect(error.status).toBe(HttpStatus.UNAUTHORIZED)
+      expect(refreshCalls).toBe(1)
+      expect(calls).toHaveLength(2)
+    })
+
+    it('surfaces the original 401 when the handler gives up', async () => {
+      const { fetch, calls } = tokenAwareFetch()
+      const http = createHttpClient({
+        baseUrl: BASE_URL,
+        getToken: () => 'expired',
+        fetch,
+        onUnauthorized: () => false,
+      })
+
+      const error = await captureError(http.request(pingRequest))
+
+      expect(error.code).toBe(ErrorCode.UNAUTHORIZED)
+      expect(calls).toHaveLength(1)
+    })
+
+    it('surfaces the 401 with the handler error as cause when the handler rejects', async () => {
+      const refreshFailure = new Error('refresh failed')
+      const { fetch, calls } = tokenAwareFetch()
+      const http = createHttpClient({
+        baseUrl: BASE_URL,
+        getToken: () => 'expired',
+        fetch,
+        onUnauthorized: () => Promise.reject(refreshFailure),
+      })
+
+      const error = await captureError(http.request(pingRequest))
+
+      expect(error.status).toBe(HttpStatus.UNAUTHORIZED)
+      expect(error.code).toBe(ErrorCode.UNAUTHORIZED)
+      expect(error.cause).toBe(refreshFailure)
+      expect(calls).toHaveLength(1)
+    })
+
+    it('allows a new refresh once the previous one has settled', async () => {
+      let refreshCalls = 0
+      const { fetch } = mockFetchHandler(() =>
+        jsonResponse(UNAUTHORIZED_BODY, HttpStatus.UNAUTHORIZED),
+      )
+      const http = createHttpClient({
+        baseUrl: BASE_URL,
+        getToken: () => 'token',
+        fetch,
+        onUnauthorized: () => {
+          refreshCalls += 1
+          return false
+        },
+      })
+
+      await captureError(http.request(pingRequest))
+      await captureError(http.request(pingRequest))
+
+      expect(refreshCalls).toBe(2)
+    })
+
+    it.each([
+      ['a public route', RequestAuthMode.NONE],
+      ['an explicit token', { token: 'rsv_abc' }],
+    ])('never runs for %s', async (_label, auth) => {
+      let refreshCalls = 0
+      const { fetch, calls } = tokenAwareFetch()
+      const http = createHttpClient({
+        baseUrl: BASE_URL,
+        getToken: () => 'expired',
+        fetch,
+        onUnauthorized: () => {
+          refreshCalls += 1
+          return true
+        },
+      })
+
+      const error = await captureError(http.request({ ...pingRequest, auth }))
+
+      expect(error.status).toBe(HttpStatus.UNAUTHORIZED)
+      expect(refreshCalls).toBe(0)
+      expect(calls).toHaveLength(1)
+    })
+
+    it('never runs on a non-401 error', async () => {
+      let refreshCalls = 0
+      const { fetch } = mockFetchHandler(() =>
+        jsonResponse(
+          { message: 'Forbidden', code: ErrorCode.FORBIDDEN, metadata: {} },
+          HttpStatus.FORBIDDEN,
+        ),
+      )
+      const http = createHttpClient({
+        baseUrl: BASE_URL,
+        getToken: () => 'token',
+        fetch,
+        onUnauthorized: () => {
+          refreshCalls += 1
+          return true
+        },
+      })
+
+      await captureError(http.request(pingRequest))
+
+      expect(refreshCalls).toBe(0)
+    })
+
+    it('also covers blob downloads', async () => {
+      let token = 'expired'
+      const { fetch, calls } = tokenAwareFetch()
+      const http = createHttpClient({
+        baseUrl: BASE_URL,
+        getToken: () => token,
+        fetch,
+        onUnauthorized: () => {
+          token = FRESH_TOKEN
+          return true
+        },
+      })
+
+      const blob = await http.requestBlob({ method: HttpMethod.GET, path: '/v1/file' })
+
+      expect(JSON.parse(await blob.text())).toEqual({ pong: true })
+      expect(calls).toHaveLength(2)
+    })
   })
 })
