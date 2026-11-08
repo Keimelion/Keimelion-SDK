@@ -77,7 +77,9 @@ const client = createClient({ baseUrl: 'https://api.example.com', getToken: asyn
 const loginCall: Promise<LoginResponseParsed> = client.auth.login({ email: 'a@b.co', password: 'x' })
 const createdAt: Date | undefined = loginResponseSchema.safeParse({}).data?.user.createdAt
 const unauthorized: 'UNAUTHORIZED' = ErrorCode.UNAUTHORIZED
-export const probes = [loginCall, createdAt, unauthorized, ApiError]
+const adminUsers = client.admin.users.list({ 'email[ilike]': 'jane', 'role[in][]': ['user'] })
+const listTitle: Promise<string | undefined> = client.lists.get('id').then(({ list }) => list.title)
+export const probes = [loginCall, createdAt, unauthorized, ApiError, adminUsers, listTitle]
 `
 }
 

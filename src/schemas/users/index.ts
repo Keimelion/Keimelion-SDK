@@ -1,1 +1,5 @@
-export * from './user-detail.js'
+export * from './change-password.js'
+export * from './export-data.js'
+export * from './get-profile.js'
+export * from './list-reservations.js'
+export * from './update-profile.js'

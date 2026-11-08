@@ -27,7 +27,7 @@ import type { HttpClient } from '../_core/http-client.js'
 import { AuthPaths } from './auth.paths.js'
 
 export interface AuthClient {
-  register(input: RegisterRequestInput): Promise<RegisterResponseParsed>
+  register(input: RegisterRequestInput | FormData): Promise<RegisterResponseParsed>
   verifyEmail(input: VerifyEmailRequestInput): Promise<VerifyEmailResponseParsed>
   login(input: LoginRequestInput): Promise<LoginResponseParsed>
   refresh(input: RefreshRequestInput): Promise<RefreshResponseParsed>

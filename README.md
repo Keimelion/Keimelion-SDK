@@ -13,7 +13,11 @@ installs it from npm.
 | `@keimelion/sdk/enums`   | `ErrorCode`, `HttpStatus`, `HttpMethod`, `HttpHeader` and every domain enum (`UserRoles`, `ItemStatuses`, `SupportedCurrencies`…)                                                 |
 | `@keimelion/sdk/client`  | `createClient`, `ApiError`, `HttpClient`                                                                                                                                          |
 
-Admin endpoints will live under `client.admin.*` in the same client (no separate subpath).
+Every API endpoint is reachable from the same client: user-facing domains on `client.<domain>`
+(`lists`, `collaborators`, `listItems`, `items`, `categories`, `occasionTypes`, `tags`, `users`,
+`reservations`, `feedback`, `public`, `health`, `auth`, `reports`) and admin resources on
+`client.admin.<resource>` (`users`, `lists`, `items`, `categories`, `shops`, `tags`,
+`occasionTypes`, `feedback`, `reservations`, `collaboratorInvites`, `reports`).
 
 Runs in browsers, Node.js ≥ 20 and MV3 service workers: the sources never import Node-only
 modules, an ORM, an HTTP framework or a DB driver (enforced by ESLint in CI).
@@ -69,8 +73,74 @@ try {
   consumer has to handle.
 - `message` is an English developer message, never meant for end users: UIs translate from
   `code` (and `issues[].code` for a 422).
-- There is no automatic refresh / 401 interceptor in 0.x yet: call `client.auth.refresh()`
-  yourself when an access token expires.
+
+### Automatic session refresh
+
+Pass `onUnauthorized` to renew the session when a request gets a 401:
+
+```ts
+const client = createClient({
+  baseUrl,
+  getToken: () => storage.accessToken,
+  onUnauthorized: async () => {
+    if (!storage.refreshToken) return false
+    const tokens = await client.auth.refresh({ refreshToken: storage.refreshToken })
+    storage.save(tokens)
+    return true // replay the failed requests with the new getToken() value
+  },
+})
+```
+
+- Concurrent 401s share one call, and each failed request is replayed exactly once. A 401 that
+  arrives after the refresh finished is simply replayed, without refreshing again.
+- Resolve `false` to give up: the caller gets the original 401. If the handler rejects, the
+  caller gets that 401 with the handler's error as `cause`.
+- It only applies to requests authenticated through `getToken`: public routes and explicit
+  tokens (`rsv_…`) never trigger it, so `client.auth.refresh` cannot recurse.
+
+### File uploads and downloads
+
+`client.auth.register`, `client.items.create/update`, `client.admin.items.create/update` and
+`client.users.updateProfile` take the JSON input or a `FormData`, sent as multipart. The file
+goes in the `image` field, arrays are JSON-encoded strings and booleans are `'true'` /
+`'false'`:
+
+```ts
+const form = new FormData()
+form.set('name', 'Headphones')
+form.set('tags', JSON.stringify(['audio']))
+form.set('image', file)
+await client.items.create(form)
+```
+
+`client.users.exportData({ format: 'csv' })` returns the RGPD export ZIP as a `Blob`, without
+Zod parsing (`format` defaults to `'json'`, also returned as a `Blob`). The client timeout
+covers the whole download: raise `timeoutMs` if exports can take longer than 30 s.
+
+### Admin list filters
+
+Admin list methods accept the API's bracket filters, typed per resource from the declared
+operators. Keys of `in` and `between` end with `[]` so a single value still reaches the API as
+an array:
+
+```ts
+await client.admin.users.list({
+  sort: 'createdAt:desc',
+  'email[ilike]': 'jane',
+  'role[in][]': ['admin'],
+  'deletedAt[isNull]': 'true',
+})
+```
+
+Sort fields and filter operators are exported per resource (`ADMIN_REPORTS_SORT_FIELDS`,
+`ADMIN_REPORTS_FILTERS`, `AdminReportsListFilters`…). `GET /v1/lists` and
+`GET /v1/users/me/reservations` only sort (`LIST_SORT_FIELDS`, `RESERVATION_SORT_FIELDS`), and
+`client.admin.reservations.list` filters through plain query params (`userId`, `listId`…).
+
+### Anonymous reservations
+
+`client.reservations.create()` returns a `token` (`rsv_…`) for an anonymous reservation; pass it
+back with `client.reservations.get(id, { reservationToken })` and `delete(id, { reservationToken })`.
 
 ### Picking only the domains you need
 
@@ -104,9 +174,12 @@ http.request({
   query: { page: 2, 'title[ilike]': 'xmas', tag: ['a', 'b'] }, // nullish values are skipped
   auth: RequestAuthMode.NONE, // public route; or { token: 'rsv_…' } to bypass getToken
   signal, // AbortSignal, forwarded to fetch
-  responseSchema: listDetailResponseSchema, // noContentResponseSchema for a 204
+  responseSchema: listsGetResponseSchema, // noContentResponseSchema for a 204
 })
 ```
+
+`http.requestBlob({ method, path, … })` is the same without `responseSchema`, for binary
+downloads.
 
 ### Using the schemas
 
@@ -126,13 +199,16 @@ const session = loginResponseSchema.parse(json) // session.user.createdAt is a D
   `loginRequestSchema`, `refreshResponseSchema`… Entity shapes reused across endpoints are
   `<entity>DetailSchema` / `<entity>SummarySchema` (`userDetailSchema`).
 - A schema used by more than one domain lives in `src/schemas/_shared/` (e.g.
-  `imageDetailSchema`, `emailSchema`), never in one domain imported by another.
+  `imageDetailSchema`, `userDetailSchema`, `emailSchema`), never in one domain imported by
+  another.
 - Every schema exports **two types** next to it: `XInput = z.input<typeof xSchema>` (what a
   caller sends / what is on the wire) and `XParsed = z.output<typeof xSchema>` (what the API
   handler receives / what the client returns). CI fails if one is missing.
 - Response schemas are plain `z.object` (unknown keys are **stripped**, not rejected), so
   additive API fields are non-breaking for older clients. Adding an **enum value** is not:
   it requires an SDK release before the API starts sending it.
+- Sort fields are plain `as const` tuples passed to `sortQuerySchema`
+  (`ADMIN_USERS_SORT_FIELDS`, `LIST_SORT_FIELDS`…).
 - Timestamps (`*_at` columns) use a codec: ISO string on the wire ↔ `Date` once parsed.
 - Calendar dates without a time (`*_date` columns, e.g. a future `event_date`) stay
   `YYYY-MM-DD` strings (`z.iso.date()`): turning them into a `Date` shifts the day depending
