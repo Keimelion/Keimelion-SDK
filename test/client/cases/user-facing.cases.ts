@@ -15,6 +15,7 @@ import { listsGetResponseSchema } from '../../../src/schemas/lists/get-list.js'
 import { listsListResponseSchema } from '../../../src/schemas/lists/list-lists.js'
 import { listsUpdateResponseSchema } from '../../../src/schemas/lists/update-list.js'
 import { occasionTypesListResponseSchema } from '../../../src/schemas/occasion-types/list-occasion-types.js'
+import { waitlistCreateResponseSchema } from '../../../src/schemas/public/create-waitlist-entry.js'
 import { publicListsGetResponseSchema } from '../../../src/schemas/public/get-public-list.js'
 import { reservationsCreateResponseSchema } from '../../../src/schemas/reservations/create-reservation.js'
 import { reportsCreateResponseSchema } from '../../../src/schemas/reports/create-report.js'
@@ -325,5 +326,19 @@ export const USER_FACING_CASES: EndpointCase[] = [
     schema: publicListsGetResponseSchema,
     auth: 'none',
     pathOverrides: { slug: 'birthday-abc' },
+  },
+  {
+    id: 'POST /v1/public/waitlist',
+    call: (client) =>
+      client.public.createWaitlistEntry({
+        email: 'visitor@example.com',
+        locale: 'fr',
+        consent: true,
+      }),
+    wire: { status: 'subscribed' },
+    schema: waitlistCreateResponseSchema,
+    status: 201,
+    auth: 'none',
+    body: { email: 'visitor@example.com', locale: 'fr', consent: true },
   },
 ]
