@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   ci:
-    uses: Keimelion/Keimelion-Infra/.github/workflows/node-ci.yml@v0.1.0
+    uses: Keimelion/Keimelion-Infra/.github/workflows/node-ci.yml@v0.1.3
 
   release:
     needs: ci
@@ -22,7 +22,7 @@ jobs:
       contents: write
       issues: write
       pull-requests: write
-    uses: Keimelion/Keimelion-Infra/.github/workflows/release.yml@v0.1.0
+    uses: Keimelion/Keimelion-Infra/.github/workflows/release.yml@v0.1.3
     secrets: inherit
 
   npm-publish:
@@ -31,7 +31,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    uses: Keimelion/Keimelion-Infra/.github/workflows/npm-publish.yml@v0.1.0
+    uses: Keimelion/Keimelion-Infra/.github/workflows/npm-publish.yml@v0.1.3
     with:
       version: ${{ needs.release.outputs.version }}
     secrets: inherit
@@ -42,4 +42,4 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    uses: Keimelion/Keimelion-Infra/.github/workflows/npm-publish-dev.yml@v0.1.0
+    uses: Keimelion/Keimelion-Infra/.github/workflows/npm-publish-dev.yml@v0.1.3
