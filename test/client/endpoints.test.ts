@@ -13,7 +13,7 @@ import type { RecordedRequest } from './fetch-mock.js'
 
 const BASE_URL = 'https://api.example.com'
 const TOKEN = 'jwt-token'
-const USER_FACING_ENDPOINT_COUNT = 32
+const USER_FACING_ENDPOINT_COUNT = 34
 const ADMIN_ENDPOINT_COUNT = 47
 const EXPORT_ENDPOINT = 'GET /v1/users/me/export'
 const NOT_FOUND_BODY = { message: 'Resource not found', code: ErrorCode.NOT_FOUND, metadata: {} }
@@ -106,7 +106,7 @@ describe.each(
 })
 
 describe('endpoint inventory', () => {
-  it('covers the 32 user-facing and 47 admin endpoints exactly once', () => {
+  it('covers the 34 user-facing and 47 admin endpoints exactly once', () => {
     const userFacing = new Set([
       ...USER_FACING_CASES.map((testCase) => testCase.id),
       EXPORT_ENDPOINT,

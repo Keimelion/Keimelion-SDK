@@ -1,2 +1,5 @@
+export * from './confirm-waitlist-entry.js'
 export * from './create-waitlist-entry.js'
 export * from './get-public-list.js'
+export * from './unsubscribe-waitlist-entry.js'
+export * from './waitlist-token.js'
