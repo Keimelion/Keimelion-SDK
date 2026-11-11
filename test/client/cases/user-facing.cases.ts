@@ -51,6 +51,7 @@ const MESSAGE_WIRE = { message: 'Done' }
 const INVITE_TOKEN = 'a'.repeat(64)
 const LIST_ITEM_INPUT = { listId: ID, itemId: ID, quantityDesired: 2, creatorNote: 'note' }
 const RESERVATION_TOKEN = 'rsv_token'
+const WAITLIST_TOKEN = 'w'.repeat(43)
 
 const publicItem = {
   id: ID,
@@ -335,10 +336,28 @@ export const USER_FACING_CASES: EndpointCase[] = [
         locale: 'fr',
         consent: true,
       }),
-    wire: { status: 'subscribed' },
+    wire: { status: 'pending_confirmation' },
     schema: waitlistCreateResponseSchema,
-    status: 201,
+    status: 202,
     auth: 'none',
     body: { email: 'visitor@example.com', locale: 'fr', consent: true },
+  },
+  {
+    id: 'POST /v1/public/waitlist/confirm',
+    call: (client) => client.public.confirmWaitlistEntry({ token: WAITLIST_TOKEN }),
+    wire: undefined,
+    schema: noContentResponseSchema,
+    status: 204,
+    auth: 'none',
+    body: { token: WAITLIST_TOKEN },
+  },
+  {
+    id: 'POST /v1/public/waitlist/unsubscribe',
+    call: (client) => client.public.unsubscribeWaitlistEntry({ token: WAITLIST_TOKEN }),
+    wire: undefined,
+    schema: noContentResponseSchema,
+    status: 204,
+    auth: 'none',
+    body: { token: WAITLIST_TOKEN },
   },
 ]

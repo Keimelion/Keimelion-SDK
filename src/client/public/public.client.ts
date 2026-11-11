@@ -1,4 +1,7 @@
 import { HttpMethod } from '../../enums/http.js'
+import { noContentResponseSchema } from '../../schemas/_shared/no-content.js'
+import type { NoContentResponseParsed } from '../../schemas/_shared/no-content.js'
+import type { WaitlistConfirmRequestInput } from '../../schemas/public/confirm-waitlist-entry.js'
 import { waitlistCreateResponseSchema } from '../../schemas/public/create-waitlist-entry.js'
 import type {
   WaitlistCreateRequestInput,
@@ -6,6 +9,7 @@ import type {
 } from '../../schemas/public/create-waitlist-entry.js'
 import { publicListsGetResponseSchema } from '../../schemas/public/get-public-list.js'
 import type { PublicListsGetResponseParsed } from '../../schemas/public/get-public-list.js'
+import type { WaitlistUnsubscribeRequestInput } from '../../schemas/public/unsubscribe-waitlist-entry.js'
 import { RequestAuthMode } from '../_core/http-client.js'
 import type { HttpClient } from '../_core/http-client.js'
 import { PublicPaths } from './public.paths.js'
@@ -13,6 +17,8 @@ import { PublicPaths } from './public.paths.js'
 export interface PublicClient {
   getList(slug: string): Promise<PublicListsGetResponseParsed>
   createWaitlistEntry(input: WaitlistCreateRequestInput): Promise<WaitlistCreateResponseParsed>
+  confirmWaitlistEntry(input: WaitlistConfirmRequestInput): Promise<NoContentResponseParsed>
+  unsubscribeWaitlistEntry(input: WaitlistUnsubscribeRequestInput): Promise<NoContentResponseParsed>
 }
 
 export function createPublicClient(http: HttpClient): PublicClient {
@@ -32,6 +38,22 @@ export function createPublicClient(http: HttpClient): PublicClient {
         body: input,
         auth: RequestAuthMode.NONE,
         responseSchema: waitlistCreateResponseSchema,
+      }),
+    confirmWaitlistEntry: (input) =>
+      http.request({
+        method: HttpMethod.POST,
+        path: PublicPaths.CONFIRM_WAITLIST_ENTRY,
+        body: input,
+        auth: RequestAuthMode.NONE,
+        responseSchema: noContentResponseSchema,
+      }),
+    unsubscribeWaitlistEntry: (input) =>
+      http.request({
+        method: HttpMethod.POST,
+        path: PublicPaths.UNSUBSCRIBE_WAITLIST_ENTRY,
+        body: input,
+        auth: RequestAuthMode.NONE,
+        responseSchema: noContentResponseSchema,
       }),
   }
 }

@@ -50,3 +50,6 @@ export const REPORT_TARGET_NOT_FOUND_MESSAGE = 'The reported user, list or item 
 export const REPORT_NOT_FOUND_MESSAGE = 'Report not found'
 
 export const WAITLIST_HONEYPOT_TRIGGERED_MESSAGE = 'This submission could not be accepted'
+
+export const WAITLIST_CONFIRMATION_TOKEN_INVALID_MESSAGE =
+  'This confirmation link is invalid or has expired'

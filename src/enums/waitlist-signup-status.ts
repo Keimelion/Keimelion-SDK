@@ -1,6 +1,7 @@
+// Every signup answers with the same status, so the response never reveals whether an address
+// is already on the waitlist.
 export const WaitlistSignupStatuses = {
-  SUBSCRIBED: 'subscribed',
-  ALREADY_SUBSCRIBED: 'already_subscribed',
+  PENDING_CONFIRMATION: 'pending_confirmation',
 } as const
 
 export type WaitlistSignupStatus =
