@@ -3,6 +3,7 @@ import { itemWithSourcesDetailSchema } from '../../_shared/item-detail.js'
 import {
   itemCategoryIdsSchema,
   itemDescriptionSchema,
+  itemGtinSchema,
   itemNameSchema,
 } from '../../_shared/item-fields.js'
 import { DUPLICATE_SHOP_IN_SOURCES_MESSAGE } from '../../_shared/messages.js'
@@ -41,6 +42,10 @@ export const adminItemsCreateRequestSchema = z
   .strictObject({
     name: itemNameSchema,
     description: itemDescriptionSchema.optional().transform((value) => value ?? null),
+    gtin: itemGtinSchema
+      .nullable()
+      .optional()
+      .transform((value) => value ?? null),
     sources: z.array(adminItemsCreateSourceRequestSchema).min(1),
     categories: itemCategoryIdsSchema.optional(),
     tags: tagNamesSchema.optional(),

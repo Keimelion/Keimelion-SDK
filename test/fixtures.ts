@@ -87,6 +87,7 @@ export function buildItemDetailWire(): ItemDetailInput {
     id: ID,
     name: 'Headphones',
     description: null,
+    gtin: '04006381333931',
     imageId: null,
     image: null,
     createdByUserId: ID,

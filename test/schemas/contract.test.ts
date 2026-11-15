@@ -361,7 +361,7 @@ describe('item requests', () => {
   it('limits categories to the maximum per item', () => {
     const categories = [ID, OTHER_ID, SOURCE_ID]
 
-    expect(schemas.itemsCreateRequestSchema.safeParse({ name: 'a', categories }).success).toBe(
+    expect(schemas.listsAddProductRequestSchema.safeParse({ name: 'a', categories }).success).toBe(
       false,
     )
   })
@@ -369,27 +369,128 @@ describe('item requests', () => {
   it('accepts clearImage on the admin update only', () => {
     expect(schemas.adminItemsUpdateRequestSchema.safeParse({ clearImage: true }).success).toBe(true)
     expect(
-      schemas.itemsCreateRequestSchema.safeParse({ name: 'a', clearImage: true }).success,
+      schemas.listsAddProductRequestSchema.safeParse({ name: 'a', clearImage: true }).success,
     ).toBe(false)
   })
 
-  it('no longer exposes a user item update contract', () => {
+  it('no longer exposes the user item create, item update and list item create contracts', () => {
+    expect('itemsCreateRequestSchema' in schemas).toBe(false)
     expect('itemsUpdateRequestSchema' in schemas).toBe(false)
     expect('itemsUpdateResponseSchema' in schemas).toBe(false)
+    expect('listItemsCreateRequestSchema' in schemas).toBe(false)
+  })
+
+  it('lets an admin set, correct and clear the gtin', () => {
+    expect(
+      schemas.adminItemsCreateRequestSchema.parse({ name: 'a', sources: [{}] }).gtin,
+    ).toBeNull()
+    expect(
+      schemas.adminItemsCreateRequestSchema.parse({
+        name: 'a',
+        gtin: '4006381333931',
+        sources: [{}],
+      }).gtin,
+    ).toBe('04006381333931')
+    expect(schemas.adminItemsUpdateRequestSchema.parse({ gtin: '96385074' }).gtin).toBe(
+      '00000096385074',
+    )
+    expect(schemas.adminItemsUpdateRequestSchema.parse({ gtin: null }).gtin).toBeNull()
+  })
+})
+
+describe('gtin', () => {
+  it('left-pads every GTIN length to 14 digits so UPC and EAN of a product match', () => {
+    const upc = schemas.itemGtinSchema.parse('036000291452')
+    const ean = schemas.itemGtinSchema.parse('0036000291452')
+
+    expect(upc).toBe('00036000291452')
+    expect(ean).toBe(upc)
+    expect(schemas.itemGtinSchema.parse(' 96385074 ')).toBe('00000096385074')
+    expect(schemas.itemGtinSchema.parse('10036000291459')).toHaveLength(schemas.GTIN_LENGTH)
+  })
+
+  it('rejects a wrong check digit', () => {
+    const result = schemas.itemGtinSchema.safeParse('4006381333932')
+
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0]?.message).toBe('gtin check digit is invalid')
+  })
+
+  it('rejects lengths that are not a GTIN and non-digit characters', () => {
+    for (const value of ['1234567', '12345678901', '123456789012345', '40063813339a1']) {
+      expect(schemas.itemGtinSchema.safeParse(value).success).toBe(false)
+    }
+  })
+})
+
+describe('add item to list requests', () => {
+  it('accepts an itemId with an optional source URL', () => {
+    expect(
+      schemas.listsAddItemRequestSchema.parse({
+        itemId: ID,
+        sourceUrl: 'https://shop.example.com/p/1',
+      }),
+    ).toEqual({ itemId: ID, sourceUrl: 'https://shop.example.com/p/1' })
+  })
+
+  it('accepts a product payload, normalizing the gtin and defaulting the currency', () => {
+    expect(
+      schemas.listsAddItemRequestSchema.parse({
+        name: ' Headphones ',
+        gtin: '036000291452',
+        price: '19.99',
+        quantityDesired: 2,
+      }),
+    ).toEqual({
+      name: 'Headphones',
+      gtin: '00036000291452',
+      price: '19.99',
+      currency: schemas.DEFAULT_SOURCE_CURRENCY,
+      quantityDesired: 2,
+    })
+  })
+
+  it('rejects an itemId together with a product, or neither, with a targeted message', () => {
+    for (const body of [{ itemId: ID, name: 'Headphones' }, {}]) {
+      const result = schemas.listsAddItemRequestSchema.safeParse(body)
+
+      expect(result.success).toBe(false)
+      expect(result.error?.issues[0]?.message).toBe(schemas.ADD_ITEM_TARGET_MESSAGE)
+    }
+  })
+
+  it('rejects product-only fields sent with an itemId', () => {
+    expect(schemas.listsAddItemRequestSchema.safeParse({ itemId: ID, price: '1.00' }).success).toBe(
+      false,
+    )
+  })
+
+  it('reports field errors of a product on their own path', () => {
+    const result = schemas.listsAddItemRequestSchema.safeParse({
+      name: 'Headphones',
+      sourceUrl: 'http://shop.example.com/p/1',
+    })
+
+    expect(result.error?.issues[0]?.path).toEqual(['sourceUrl'])
+  })
+
+  it('describes the already-in-list conflict metadata', () => {
+    expect(
+      schemas.listItemAlreadyExistsMetadataSchema.parse({ listItemId: ID, quantityDesired: 3 }),
+    ).toEqual({ listItemId: ID, quantityDesired: 3 })
   })
 })
 
 describe('list item requests', () => {
-  const createBody = { listId: ID, itemId: OTHER_ID }
   const tooLongCustomName = 'a'.repeat(schemas.MAX_CUSTOM_NAME_LENGTH + 1)
 
-  it('accepts a customName on create, add-item and update', () => {
+  it('accepts a customName on add-item and update', () => {
     expect(
-      schemas.listItemsCreateRequestSchema.parse({ ...createBody, customName: ' Gift ' })
-        .customName,
+      schemas.listsAddItemRequestSchema.parse({ itemId: ID, customName: ' Gift ' }).customName,
     ).toBe('Gift')
     expect(
-      schemas.listsAddItemRequestSchema.parse({ itemId: ID, customName: 'Gift' }).customName,
+      schemas.listsAddItemRequestSchema.parse({ name: 'Headphones', customName: 'Gift' })
+        .customName,
     ).toBe('Gift')
     expect(schemas.listItemsUpdateRequestSchema.parse({ customName: 'Gift' }).customName).toBe(
       'Gift',
@@ -412,12 +513,6 @@ describe('list item requests', () => {
     expect(result.error?.issues[0]?.message).toBe(
       `customName must be at most ${String(schemas.MAX_CUSTOM_NAME_LENGTH)} characters`,
     )
-    expect(
-      schemas.listItemsCreateRequestSchema.safeParse({
-        ...createBody,
-        customName: tooLongCustomName,
-      }).success,
-    ).toBe(false)
     expect(
       schemas.listsAddItemRequestSchema.safeParse({ itemId: ID, customName: tooLongCustomName })
         .success,

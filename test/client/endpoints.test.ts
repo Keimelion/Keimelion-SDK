@@ -4,7 +4,7 @@ import { createClient } from '../../src/client/create-client.js'
 import type { KeimelionClient } from '../../src/client/create-client.js'
 import { ErrorCode } from '../../src/enums/error-code.js'
 import { HttpStatus } from '../../src/enums/http.js'
-import { buildUserDetailWire, ID, SOURCE_ID } from '../fixtures.js'
+import { buildItemWithSourcesWire, buildUserDetailWire, ID, SOURCE_ID } from '../fixtures.js'
 import { ADMIN_CASES } from './cases/admin.cases.js'
 import type { EndpointCase } from './cases/endpoint-case.js'
 import { USER_FACING_CASES } from './cases/user-facing.cases.js'
@@ -13,7 +13,7 @@ import type { RecordedRequest } from './fetch-mock.js'
 
 const BASE_URL = 'https://api.example.com'
 const TOKEN = 'jwt-token'
-const USER_FACING_ENDPOINT_COUNT = 33
+const USER_FACING_ENDPOINT_COUNT = 31
 const ADMIN_ENDPOINT_COUNT = 47
 const EXPORT_ENDPOINT = 'GET /v1/users/me/export'
 const NOT_FOUND_BODY = { message: 'Resource not found', code: ErrorCode.NOT_FOUND, metadata: {} }
@@ -106,7 +106,7 @@ describe.each(
 })
 
 describe('endpoint inventory', () => {
-  it('covers the 33 user-facing and 47 admin endpoints exactly once', () => {
+  it('covers the 31 user-facing and 47 admin endpoints exactly once', () => {
     const userFacing = new Set([
       ...USER_FACING_CASES.map((testCase) => testCase.id),
       EXPORT_ENDPOINT,
@@ -164,8 +164,9 @@ describe('client.users.exportData', () => {
 })
 
 describe('multipart endpoints', () => {
-  const itemWire =
-    USER_FACING_CASES.find((testCase) => testCase.id === 'POST /v1/items')?.wire ?? {}
+  const addItemWire =
+    USER_FACING_CASES.find((testCase) => testCase.id === 'POST /v1/lists/:id/items')?.wire ?? {}
+  const itemWire = { item: buildItemWithSourcesWire() }
   const profileWire =
     USER_FACING_CASES.find((testCase) => testCase.id === 'GET /v1/users/me')?.wire ?? {}
 
@@ -175,7 +176,7 @@ describe('multipart endpoints', () => {
       { user: buildUserDetailWire(), refreshToken: 'refresh' },
       (client, form) => client.auth.register(form),
     ],
-    ['POST /v1/items', itemWire, (client, form) => client.items.create(form)],
+    ['POST /v1/lists/:id/items', addItemWire, (client, form) => client.lists.addItem(ID, form)],
     ['PATCH /v1/users/me', profileWire, (client, form) => client.users.updateProfile(form)],
     ['POST /v1/admin/items', itemWire, (client, form) => client.admin.items.create(form)],
     ['PATCH /v1/admin/items/:id', itemWire, (client, form) => client.admin.items.update(ID, form)],

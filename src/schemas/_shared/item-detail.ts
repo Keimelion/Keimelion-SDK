@@ -9,6 +9,7 @@ export const itemDetailSchema = z.object({
   id: z.guid(),
   name: z.string(),
   description: z.string().nullable(),
+  gtin: z.string().nullable(),
   imageId: z.guid().nullable(),
   image: imageDetailSchema.nullable(),
   createdByUserId: z.guid().nullable(),

@@ -3,10 +3,8 @@ import { collaboratorsAcceptInviteResponseSchema } from '../../../src/schemas/co
 import { collaboratorsCreateInviteResponseSchema } from '../../../src/schemas/collaborators/create-invite.js'
 import { feedbackCreateResponseSchema } from '../../../src/schemas/feedback/create-feedback.js'
 import { healthGetResponseSchema } from '../../../src/schemas/health/get-health.js'
-import { itemsCreateResponseSchema } from '../../../src/schemas/items/create-item.js'
 import { itemsGetResponseSchema } from '../../../src/schemas/items/get-item.js'
 import { itemsListResponseSchema } from '../../../src/schemas/items/list-items.js'
-import { listItemsCreateResponseSchema } from '../../../src/schemas/list-items/create-list-item.js'
 import { listItemsUpdateResponseSchema } from '../../../src/schemas/list-items/update-list-item.js'
 import { listsAddItemResponseSchema } from '../../../src/schemas/lists/add-item.js'
 import { listsCreateResponseSchema } from '../../../src/schemas/lists/create-list.js'
@@ -48,7 +46,6 @@ import type { EndpointCase } from './endpoint-case.js'
 
 const MESSAGE_WIRE = { message: 'Done' }
 const INVITE_TOKEN = 'a'.repeat(64)
-const LIST_ITEM_INPUT = { listId: ID, itemId: ID, quantityDesired: 2, creatorNote: 'note' }
 const RESERVATION_TOKEN = 'rsv_token'
 const WAITLIST_TOKEN = 'w'.repeat(43)
 
@@ -56,6 +53,7 @@ const publicItem = {
   id: ID,
   name: 'Headphones',
   description: null,
+  gtin: null,
   imageId: null,
   image: null,
   sources: [buildItemSourceDetailWire()],
@@ -148,14 +146,6 @@ export const USER_FACING_CASES: EndpointCase[] = [
     body: { token: INVITE_TOKEN },
   },
   {
-    id: 'POST /v1/list-items',
-    call: (client) => client.listItems.create(LIST_ITEM_INPUT),
-    wire: { listItem: buildListItemDetailWire() },
-    schema: listItemsCreateResponseSchema,
-    status: 201,
-    body: LIST_ITEM_INPUT,
-  },
-  {
     id: 'PATCH /v1/list-items/:id',
     call: (client) => client.listItems.update(ID, { sortOrder: 3 }),
     wire: { listItem: buildListItemDetailWire() },
@@ -175,14 +165,6 @@ export const USER_FACING_CASES: EndpointCase[] = [
     schema: itemsListResponseSchema,
     auth: 'none',
     query: { limit: '5' },
-  },
-  {
-    id: 'POST /v1/items',
-    call: (client) => client.items.create({ name: 'Headphones' }),
-    wire: { item: buildItemWithSourcesWire() },
-    schema: itemsCreateResponseSchema,
-    status: 201,
-    body: { name: 'Headphones' },
   },
   {
     id: 'GET /v1/items/:id',

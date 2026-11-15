@@ -100,7 +100,7 @@ const client = createClient({
 
 ### File uploads and downloads
 
-`client.auth.register`, `client.items.create/update`, `client.admin.items.create/update` and
+`client.auth.register`, `client.lists.addItem`, `client.admin.items.create/update` and
 `client.users.updateProfile` take the JSON input or a `FormData`, sent as multipart. The file
 goes in the `image` field, arrays are JSON-encoded strings and booleans are `'true'` /
 `'false'`:
@@ -110,7 +110,7 @@ const form = new FormData()
 form.set('name', 'Headphones')
 form.set('tags', JSON.stringify(['audio']))
 form.set('image', file)
-await client.items.create(form)
+await client.lists.addItem(listId, form)
 ```
 
 `client.users.exportData({ format: 'csv' })` returns the RGPD export ZIP as a `Blob`, without

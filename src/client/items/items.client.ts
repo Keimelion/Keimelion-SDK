@@ -1,9 +1,4 @@
 import { HttpMethod } from '../../enums/http.js'
-import { itemsCreateResponseSchema } from '../../schemas/items/create-item.js'
-import type {
-  ItemsCreateRequestInput,
-  ItemsCreateResponseParsed,
-} from '../../schemas/items/create-item.js'
 import { itemsGetResponseSchema } from '../../schemas/items/get-item.js'
 import type { ItemsGetResponseParsed } from '../../schemas/items/get-item.js'
 import { itemsListResponseSchema } from '../../schemas/items/list-items.js'
@@ -17,7 +12,6 @@ import { ItemsPaths } from './items.paths.js'
 
 export interface ItemsClient {
   list(query?: ItemsListQueryInput): Promise<ItemsListResponseParsed>
-  create(input: ItemsCreateRequestInput | FormData): Promise<ItemsCreateResponseParsed>
   get(id: string): Promise<ItemsGetResponseParsed>
 }
 
@@ -30,13 +24,6 @@ export function createItemsClient(http: HttpClient): ItemsClient {
         query,
         auth: RequestAuthMode.NONE,
         responseSchema: itemsListResponseSchema,
-      }),
-    create: (input) =>
-      http.request({
-        method: HttpMethod.POST,
-        path: ItemsPaths.CREATE,
-        body: input,
-        responseSchema: itemsCreateResponseSchema,
       }),
     get: (id) =>
       http.request({

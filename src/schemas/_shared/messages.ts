@@ -1,6 +1,11 @@
 export const DUPLICATE_SHOP_IN_SOURCES_MESSAGE =
   'This shop is already used by another source of this item.'
 
+export const LIST_ITEM_ALREADY_EXISTS_MESSAGE = 'This item is already in the list.'
+
+export const ADD_ITEM_TARGET_MESSAGE =
+  'Send either an itemId or a product with a name, with valid field types.'
+
 export const SLUG_GENERATION_EXHAUSTED_MESSAGE =
   'Could not generate a unique slug, please retry with a different title.'
 
