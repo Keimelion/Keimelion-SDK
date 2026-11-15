@@ -13,7 +13,7 @@ import type { RecordedRequest } from './fetch-mock.js'
 
 const BASE_URL = 'https://api.example.com'
 const TOKEN = 'jwt-token'
-const USER_FACING_ENDPOINT_COUNT = 34
+const USER_FACING_ENDPOINT_COUNT = 33
 const ADMIN_ENDPOINT_COUNT = 47
 const EXPORT_ENDPOINT = 'GET /v1/users/me/export'
 const NOT_FOUND_BODY = { message: 'Resource not found', code: ErrorCode.NOT_FOUND, metadata: {} }
@@ -106,7 +106,7 @@ describe.each(
 })
 
 describe('endpoint inventory', () => {
-  it('covers the 34 user-facing and 47 admin endpoints exactly once', () => {
+  it('covers the 33 user-facing and 47 admin endpoints exactly once', () => {
     const userFacing = new Set([
       ...USER_FACING_CASES.map((testCase) => testCase.id),
       EXPORT_ENDPOINT,
@@ -176,7 +176,6 @@ describe('multipart endpoints', () => {
       (client, form) => client.auth.register(form),
     ],
     ['POST /v1/items', itemWire, (client, form) => client.items.create(form)],
-    ['PATCH /v1/items/:id', itemWire, (client, form) => client.items.update(ID, form)],
     ['PATCH /v1/users/me', profileWire, (client, form) => client.users.updateProfile(form)],
     ['POST /v1/admin/items', itemWire, (client, form) => client.admin.items.create(form)],
     ['PATCH /v1/admin/items/:id', itemWire, (client, form) => client.admin.items.update(ID, form)],

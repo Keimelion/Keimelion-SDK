@@ -366,10 +366,61 @@ describe('item requests', () => {
     )
   })
 
-  it('accepts clearImage on update only', () => {
-    expect(schemas.itemsUpdateRequestSchema.safeParse({ clearImage: true }).success).toBe(true)
+  it('accepts clearImage on the admin update only', () => {
+    expect(schemas.adminItemsUpdateRequestSchema.safeParse({ clearImage: true }).success).toBe(true)
     expect(
       schemas.itemsCreateRequestSchema.safeParse({ name: 'a', clearImage: true }).success,
+    ).toBe(false)
+  })
+
+  it('no longer exposes a user item update contract', () => {
+    expect('itemsUpdateRequestSchema' in schemas).toBe(false)
+    expect('itemsUpdateResponseSchema' in schemas).toBe(false)
+  })
+})
+
+describe('list item requests', () => {
+  const createBody = { listId: ID, itemId: OTHER_ID }
+  const tooLongCustomName = 'a'.repeat(schemas.MAX_CUSTOM_NAME_LENGTH + 1)
+
+  it('accepts a customName on create, add-item and update', () => {
+    expect(
+      schemas.listItemsCreateRequestSchema.parse({ ...createBody, customName: ' Gift ' })
+        .customName,
+    ).toBe('Gift')
+    expect(
+      schemas.listsAddItemRequestSchema.parse({ itemId: ID, customName: 'Gift' }).customName,
+    ).toBe('Gift')
+    expect(schemas.listItemsUpdateRequestSchema.parse({ customName: 'Gift' }).customName).toBe(
+      'Gift',
+    )
+  })
+
+  it('turns a blank customName into null so it can be cleared', () => {
+    expect(schemas.listItemsUpdateRequestSchema.parse({ customName: '  ' }).customName).toBeNull()
+    expect(schemas.listItemsUpdateRequestSchema.parse({ customName: null }).customName).toBeNull()
+  })
+
+  it('bounds the customName length with an explicit message', () => {
+    const atMax = 'a'.repeat(schemas.MAX_CUSTOM_NAME_LENGTH)
+    const result = schemas.listItemsUpdateRequestSchema.safeParse({
+      customName: tooLongCustomName,
+    })
+
+    expect(schemas.listItemsUpdateRequestSchema.safeParse({ customName: atMax }).success).toBe(true)
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0]?.message).toBe(
+      `customName must be at most ${String(schemas.MAX_CUSTOM_NAME_LENGTH)} characters`,
+    )
+    expect(
+      schemas.listItemsCreateRequestSchema.safeParse({
+        ...createBody,
+        customName: tooLongCustomName,
+      }).success,
+    ).toBe(false)
+    expect(
+      schemas.listsAddItemRequestSchema.safeParse({ itemId: ID, customName: tooLongCustomName })
+        .success,
     ).toBe(false)
   })
 })

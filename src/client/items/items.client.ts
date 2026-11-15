@@ -11,11 +11,6 @@ import type {
   ItemsListQueryInput,
   ItemsListResponseParsed,
 } from '../../schemas/items/list-items.js'
-import { itemsUpdateResponseSchema } from '../../schemas/items/update-item.js'
-import type {
-  ItemsUpdateRequestInput,
-  ItemsUpdateResponseParsed,
-} from '../../schemas/items/update-item.js'
 import { RequestAuthMode } from '../_core/http-client.js'
 import type { HttpClient } from '../_core/http-client.js'
 import { ItemsPaths } from './items.paths.js'
@@ -24,7 +19,6 @@ export interface ItemsClient {
   list(query?: ItemsListQueryInput): Promise<ItemsListResponseParsed>
   create(input: ItemsCreateRequestInput | FormData): Promise<ItemsCreateResponseParsed>
   get(id: string): Promise<ItemsGetResponseParsed>
-  update(id: string, input: ItemsUpdateRequestInput | FormData): Promise<ItemsUpdateResponseParsed>
 }
 
 export function createItemsClient(http: HttpClient): ItemsClient {
@@ -51,14 +45,6 @@ export function createItemsClient(http: HttpClient): ItemsClient {
         pathParams: { id },
         auth: RequestAuthMode.NONE,
         responseSchema: itemsGetResponseSchema,
-      }),
-    update: (id, input) =>
-      http.request({
-        method: HttpMethod.PATCH,
-        path: ItemsPaths.UPDATE,
-        pathParams: { id },
-        body: input,
-        responseSchema: itemsUpdateResponseSchema,
       }),
   }
 }

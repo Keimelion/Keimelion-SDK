@@ -1,10 +1,15 @@
 import { z } from 'zod'
 import { listItemDetailSchema } from '../_shared/list-item-detail.js'
-import { creatorNoteSchema, quantityDesiredSchema } from '../_shared/list-item-fields.js'
+import {
+  creatorNoteSchema,
+  customNameSchema,
+  quantityDesiredSchema,
+} from '../_shared/list-item-fields.js'
 
 export const listItemsUpdateRequestSchema = z.strictObject({
   quantityDesired: quantityDesiredSchema.optional(),
   creatorNote: creatorNoteSchema.optional(),
+  customName: customNameSchema.optional(),
   sortOrder: z.number().int().optional(),
 })
 
