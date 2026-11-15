@@ -126,6 +126,7 @@ export function buildListItemDetailWire(): ListItemDetailInput {
     itemStatus: 'available',
     sortOrder: null,
     creatorNote: null,
+    customName: null,
     ...TIMESTAMPS,
   }
 }

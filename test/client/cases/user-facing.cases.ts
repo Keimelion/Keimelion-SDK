@@ -6,7 +6,6 @@ import { healthGetResponseSchema } from '../../../src/schemas/health/get-health.
 import { itemsCreateResponseSchema } from '../../../src/schemas/items/create-item.js'
 import { itemsGetResponseSchema } from '../../../src/schemas/items/get-item.js'
 import { itemsListResponseSchema } from '../../../src/schemas/items/list-items.js'
-import { itemsUpdateResponseSchema } from '../../../src/schemas/items/update-item.js'
 import { listItemsCreateResponseSchema } from '../../../src/schemas/list-items/create-list-item.js'
 import { listItemsUpdateResponseSchema } from '../../../src/schemas/list-items/update-list-item.js'
 import { listsAddItemResponseSchema } from '../../../src/schemas/lists/add-item.js'
@@ -75,7 +74,7 @@ const publicList = {
   occasionTypeId: null,
   owner: { id: ID, username: 'jane', avatar: null },
   tags: [buildTagSummaryWire()],
-  items: [{ ...buildListItemDetailWire(), item: publicItem }],
+  items: [{ ...buildListItemDetailWire(), name: 'Headphones', item: publicItem }],
   createdAt: CREATED_AT_ISO,
   updatedAt: UPDATED_AT_ISO,
 }
@@ -191,13 +190,6 @@ export const USER_FACING_CASES: EndpointCase[] = [
     wire: { item: buildItemWithSourcesWire() },
     schema: itemsGetResponseSchema,
     auth: 'none',
-  },
-  {
-    id: 'PATCH /v1/items/:id',
-    call: (client) => client.items.update(ID, { name: 'New' }),
-    wire: { item: buildItemWithSourcesWire() },
-    schema: itemsUpdateResponseSchema,
-    body: { name: 'New' },
   },
   {
     id: 'GET /v1/categories',

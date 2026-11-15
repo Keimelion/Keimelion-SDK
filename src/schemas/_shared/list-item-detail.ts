@@ -11,6 +11,7 @@ export const listItemDetailSchema = z.object({
   itemStatus: z.enum(ITEM_STATUS_VALUES),
   sortOrder: z.number().int().nullable(),
   creatorNote: z.string().nullable(),
+  customName: z.string().nullable(),
   createdAt: isoDateTimeSchema,
   updatedAt: isoDateTimeSchema,
 })

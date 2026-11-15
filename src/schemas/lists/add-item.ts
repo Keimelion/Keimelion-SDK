@@ -1,12 +1,17 @@
 import { z } from 'zod'
 import { itemDetailSchema, itemSourceDetailSchema } from '../_shared/item-detail.js'
 import { listItemDetailSchema } from '../_shared/list-item-detail.js'
-import { creatorNoteSchema, quantityDesiredSchema } from '../_shared/list-item-fields.js'
+import {
+  creatorNoteSchema,
+  customNameSchema,
+  quantityDesiredSchema,
+} from '../_shared/list-item-fields.js'
 
 export const listsAddItemRequestSchema = z.strictObject({
   itemId: z.guid(),
   quantityDesired: quantityDesiredSchema.optional(),
   creatorNote: creatorNoteSchema.optional(),
+  customName: customNameSchema.optional(),
 })
 
 export type ListsAddItemRequestInput = z.input<typeof listsAddItemRequestSchema>
