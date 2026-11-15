@@ -109,7 +109,7 @@ function buildAdminItemWire(): object {
 }
 
 function buildShopDetailWire(): object {
-  return { ...buildShopSummaryWire(), sortOrder: 0, isActive: true, ...TIMESTAMPS }
+  return { ...buildShopSummaryWire(), sortOrder: 0, ...TIMESTAMPS }
 }
 
 function buildTagDetailWire(): object {
@@ -341,10 +341,10 @@ export const ADMIN_CASES: EndpointCase[] = [
   },
   {
     id: 'GET /v1/admin/shops',
-    call: (client) => client.admin.shops.list({ 'isActive[eq]': true }),
+    call: (client) => client.admin.shops.list({ 'isAffiliated[eq]': true }),
     wire: paginated(buildShopDetailWire()),
     schema: adminShopsListResponseSchema,
-    query: { 'isActive[eq]': 'true' },
+    query: { 'isAffiliated[eq]': 'true' },
   },
   {
     id: 'POST /v1/admin/shops',
@@ -377,10 +377,10 @@ export const ADMIN_CASES: EndpointCase[] = [
   },
   {
     id: 'PATCH /v1/admin/shops/:id',
-    call: (client) => client.admin.shops.update(ID, { isActive: false }),
+    call: (client) => client.admin.shops.update(ID, { isAffiliated: true }),
     wire: { shop: buildShopDetailWire() },
     schema: adminShopsUpdateResponseSchema,
-    body: { isActive: false },
+    body: { isAffiliated: true },
   },
   {
     id: 'DELETE /v1/admin/shops/:id',

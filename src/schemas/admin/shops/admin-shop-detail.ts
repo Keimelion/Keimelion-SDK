@@ -17,7 +17,6 @@ export const ADMIN_SHOPS_FILTERS = {
   name: ['eq', 'ilike'],
   slug: ['eq', 'ilike'],
   domain: ['eq', 'ilike', 'isNull'],
-  isActive: ['eq'],
   isAffiliated: ['eq'],
 } as const satisfies AdminFilterConfig
 
@@ -25,7 +24,6 @@ export type AdminShopsListFilters = AdminFilterQuery<typeof ADMIN_SHOPS_FILTERS>
 
 export const shopDetailSchema = shopSummarySchema.extend({
   sortOrder: z.number().int(),
-  isActive: z.boolean(),
   createdAt: isoDateTimeSchema,
   updatedAt: isoDateTimeSchema,
 })
