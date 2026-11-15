@@ -3,6 +3,7 @@ import { itemWithSourcesDetailSchema } from '../../_shared/item-detail.js'
 import {
   itemCategoryIdsSchema,
   itemDescriptionSchema,
+  itemGtinSchema,
   itemNameSchema,
 } from '../../_shared/item-fields.js'
 import { tagNamesSchema } from '../../_shared/tag-fields.js'
@@ -11,6 +12,7 @@ import { tagNamesSchema } from '../../_shared/tag-fields.js'
 export const adminItemsUpdateRequestSchema = z.strictObject({
   name: itemNameSchema.optional(),
   description: itemDescriptionSchema.optional(),
+  gtin: itemGtinSchema.nullable().optional(),
   categories: itemCategoryIdsSchema.optional(),
   tags: tagNamesSchema.optional(),
   clearImage: z.boolean().optional(),

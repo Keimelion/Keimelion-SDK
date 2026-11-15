@@ -32,7 +32,10 @@ export interface ListsClient {
   get(id: string): Promise<ListsGetResponseParsed>
   update(id: string, input: ListsUpdateRequestInput): Promise<ListsUpdateResponseParsed>
   delete(id: string): Promise<NoContentResponseParsed>
-  addItem(id: string, input: ListsAddItemRequestInput): Promise<ListsAddItemResponseParsed>
+  addItem(
+    id: string,
+    input: ListsAddItemRequestInput | FormData,
+  ): Promise<ListsAddItemResponseParsed>
 }
 
 export function createListsClient(http: HttpClient): ListsClient {

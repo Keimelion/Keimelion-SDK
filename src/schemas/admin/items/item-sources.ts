@@ -1,20 +1,14 @@
 import { z } from 'zod'
 import { supportedCurrencyEnum } from '../../_shared/currency.js'
 import { itemSourceDetailSchema } from '../../_shared/item-detail.js'
-import { httpsUrlSchema } from '../../_shared/url.js'
+import {
+  DEFAULT_SOURCE_CURRENCY,
+  itemSourcePriceSchema,
+  itemSourceUrlSchema,
+} from '../../_shared/item-source-fields.js'
 
-const MAX_SOURCE_URL_LENGTH = 2048
-const PRICE_REGEX = /^\d{1,8}(\.\d{1,2})?$/
-
-const sourceUrlSchema = httpsUrlSchema('sourceUrl', MAX_SOURCE_URL_LENGTH).nullable()
-
-const priceSchema = z
-  .string()
-  .regex(
-    PRICE_REGEX,
-    'price must be a decimal with up to 8 digits before the dot and 2 after (e.g. 19.99)',
-  )
-  .nullable()
+const sourceUrlSchema = itemSourceUrlSchema.nullable()
+const priceSchema = itemSourcePriceSchema.nullable()
 
 const shopIdSchema = z.guid().nullable()
 
@@ -22,7 +16,7 @@ export const adminItemsCreateSourceRequestSchema = z.strictObject({
   shopId: shopIdSchema.optional().transform((value) => value ?? null),
   sourceUrl: sourceUrlSchema.optional().transform((value) => value ?? null),
   price: priceSchema.optional().transform((value) => value ?? null),
-  currency: supportedCurrencyEnum.default('EUR'),
+  currency: supportedCurrencyEnum.default(DEFAULT_SOURCE_CURRENCY),
 })
 
 export type AdminItemsCreateSourceRequestInput = z.input<typeof adminItemsCreateSourceRequestSchema>
