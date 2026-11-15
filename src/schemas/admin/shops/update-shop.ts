@@ -11,7 +11,6 @@ export const adminShopsUpdateRequestSchema = z.strictObject({
   logoUrl: shopLogoUrlSchema.optional(),
   isAffiliated: z.boolean().optional(),
   sortOrder: sortOrderSchema.optional(),
-  isActive: z.boolean().optional(),
 })
 
 export type AdminShopsUpdateRequestInput = z.input<typeof adminShopsUpdateRequestSchema>

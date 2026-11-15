@@ -11,7 +11,6 @@ export const adminShopsCreateRequestSchema = z.strictObject({
   logoUrl: shopLogoUrlSchema.optional().transform((value) => value ?? null),
   isAffiliated: z.boolean().default(false),
   sortOrder: sortOrderSchema.default(0),
-  isActive: z.boolean().default(true),
 })
 
 export type AdminShopsCreateRequestInput = z.input<typeof adminShopsCreateRequestSchema>

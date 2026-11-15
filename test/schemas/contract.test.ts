@@ -246,7 +246,6 @@ describe.each<[string, z.ZodType, readonly string[], Record<string, readonly str
       name: ['eq', 'ilike'],
       slug: ['eq', 'ilike'],
       domain: ['eq', 'ilike', 'isNull'],
-      isActive: ['eq'],
       isAffiliated: ['eq'],
     },
   ],
@@ -462,7 +461,6 @@ describe('admin requests', () => {
       logoUrl: null,
       isAffiliated: false,
       sortOrder: 0,
-      isActive: true,
     })
   })
 
