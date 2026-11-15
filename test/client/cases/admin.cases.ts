@@ -168,11 +168,11 @@ export const ADMIN_CASES: EndpointCase[] = [
   },
   {
     id: 'POST /v1/admin/users',
-    call: (client) => client.admin.users.create({ email: 'a@example.com', role: 'user' }),
+    call: (client) => client.admin.users.create({ email: 'a@example.com', role: 'moderator' }),
     wire: { user: buildAdminUserWire() },
     schema: adminUsersCreateResponseSchema,
     status: 201,
-    body: { email: 'a@example.com', role: 'user' },
+    body: { email: 'a@example.com', role: 'moderator' },
   },
   {
     id: 'GET /v1/admin/users/:id',

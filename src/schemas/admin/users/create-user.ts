@@ -1,12 +1,12 @@
 import { z } from 'zod'
-import { USER_ROLE_VALUES } from '../../../enums/user-role.js'
+import { STAFF_ROLE_VALUES } from '../../../enums/user-role.js'
 import { usernameSchema } from '../../_shared/username.js'
 import { adminUserDetailSchema } from './admin-user-detail.js'
 
 export const adminUsersCreateRequestSchema = z.strictObject({
   email: z.email().toLowerCase(),
   username: usernameSchema.nullish().transform((value) => value ?? null),
-  role: z.enum(USER_ROLE_VALUES),
+  role: z.enum(STAFF_ROLE_VALUES),
 })
 
 export type AdminUsersCreateRequestInput = z.input<typeof adminUsersCreateRequestSchema>
