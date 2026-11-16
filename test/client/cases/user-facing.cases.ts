@@ -108,10 +108,10 @@ export const USER_FACING_CASES: EndpointCase[] = [
   },
   {
     id: 'PATCH /v1/lists/:id',
-    call: (client) => client.lists.update(ID, { listStatus: 'archived' }),
+    call: (client) => client.lists.update(ID, { title: 'Birthday' }),
     wire: { list: buildListDetailWire() },
     schema: listsUpdateResponseSchema,
-    body: { listStatus: 'archived' },
+    body: { title: 'Birthday' },
   },
   {
     id: 'DELETE /v1/lists/:id',

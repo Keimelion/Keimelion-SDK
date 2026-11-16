@@ -1,6 +1,5 @@
 export const ListStatuses = {
   ACTIVE: 'active',
-  ARCHIVED: 'archived',
   DELETED: 'deleted',
 } as const
 

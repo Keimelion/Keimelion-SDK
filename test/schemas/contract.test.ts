@@ -1,5 +1,7 @@
 import { describe, expect, expectTypeOf, it } from 'vitest'
 import type { z } from 'zod'
+import { ITEM_STATUS_VALUES } from '../../src/enums/item-status.js'
+import { LIST_STATUS_VALUES } from '../../src/enums/list-status.js'
 import * as schemas from '../../src/schemas/index.js'
 import {
   CREATED_AT_ISO,
@@ -312,16 +314,19 @@ describe('list requests', () => {
     expect(schemas.listsCreateRequestSchema.safeParse({ title: 'a', extra: 1 }).success).toBe(false)
   })
 
-  it('only lets an owner archive or reactivate, while an admin can also delete', () => {
-    expect(schemas.listsUpdateRequestSchema.safeParse({ listStatus: 'archived' }).success).toBe(
-      true,
-    )
-    expect(schemas.listsUpdateRequestSchema.safeParse({ listStatus: 'deleted' }).success).toBe(
-      false,
-    )
+  it('never lets an owner change the list status, while an admin can still delete', () => {
+    expect(schemas.listsUpdateRequestSchema.safeParse({ listStatus: 'active' }).success).toBe(false)
     expect(schemas.adminListsUpdateRequestSchema.safeParse({ listStatus: 'deleted' }).success).toBe(
       true,
     )
+  })
+
+  it('drops the archived list status and the purchased item status', () => {
+    expect(
+      schemas.adminListsUpdateRequestSchema.safeParse({ listStatus: 'archived' }).success,
+    ).toBe(false)
+    expect(LIST_STATUS_VALUES).toEqual(['active', 'deleted'])
+    expect(ITEM_STATUS_VALUES).toEqual(['available', 'reserved'])
   })
 
   it('rejects more tags than allowed', () => {
