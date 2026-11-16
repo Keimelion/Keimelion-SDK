@@ -30,10 +30,13 @@ describe('response conventions', () => {
       bannedAt: CREATED_AT_ISO,
       banReason: 'spam',
       deletedAt: null,
+      activatedAt: CREATED_AT_ISO,
+      status: 'banned',
       reservationsCount: 0,
     })
 
     expect(parsed.bannedAt).toBeInstanceOf(Date)
+    expect(parsed.activatedAt).toBeInstanceOf(Date)
     expect(parsed.deletedAt).toBeNull()
   })
 

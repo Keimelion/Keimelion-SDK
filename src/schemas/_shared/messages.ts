@@ -58,3 +58,9 @@ export const WAITLIST_HONEYPOT_TRIGGERED_MESSAGE = 'This submission could not be
 
 export const WAITLIST_CONFIRMATION_TOKEN_INVALID_MESSAGE =
   'This confirmation link is invalid or has expired'
+
+export const STAFF_INVITATION_NOT_STAFF_ACCOUNT_MESSAGE =
+  'Only moderator and admin accounts receive a staff invitation'
+
+export const STAFF_INVITATION_NOT_PENDING_MESSAGE =
+  'This account has no pending invitation: it is already activated, banned or being deleted'
