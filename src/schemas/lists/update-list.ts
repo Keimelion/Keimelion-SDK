@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import { ListStatuses } from '../../enums/list-status.js'
 import { listDetailSchema } from '../_shared/list-detail.js'
 import {
   listDescriptionSchema,
@@ -8,14 +7,11 @@ import {
 } from '../_shared/list-fields.js'
 import { tagNamesSchema } from '../_shared/tag-fields.js'
 
-export const USER_UPDATABLE_LIST_STATUSES = [ListStatuses.ACTIVE, ListStatuses.ARCHIVED] as const
-
 export const listsUpdateRequestSchema = z.strictObject({
   title: listTitleSchema.optional(),
   description: listDescriptionSchema.optional(),
   occasionTypeId: listOccasionTypeIdSchema.optional(),
   tags: tagNamesSchema.optional(),
-  listStatus: z.enum(USER_UPDATABLE_LIST_STATUSES).optional(),
 })
 
 export type ListsUpdateRequestInput = z.input<typeof listsUpdateRequestSchema>

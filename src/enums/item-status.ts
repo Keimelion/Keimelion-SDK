@@ -1,7 +1,6 @@
 export const ItemStatuses = {
   AVAILABLE: 'available',
   RESERVED: 'reserved',
-  PURCHASED: 'purchased',
 } as const
 
 export type ItemStatus = (typeof ItemStatuses)[keyof typeof ItemStatuses]
