@@ -164,11 +164,16 @@ export const ADMIN_CASES: EndpointCase[] = [
         sort: 'email:asc',
         'email[ilike]': 'jane',
         'role[in][]': ['user'],
-        status: 'invited',
+        'status[in][]': ['invited', 'inactive'],
       }),
     wire: paginated(buildAdminUserWire()),
     schema: adminUsersListResponseSchema,
-    query: { sort: 'email:asc', 'email[ilike]': 'jane', 'role[in][]': ['user'], status: 'invited' },
+    query: {
+      sort: 'email:asc',
+      'email[ilike]': 'jane',
+      'role[in][]': ['user'],
+      'status[in][]': ['invited', 'inactive'],
+    },
   },
   {
     id: 'POST /v1/admin/users',

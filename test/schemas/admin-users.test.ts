@@ -1,7 +1,7 @@
 import { describe, expect, expectTypeOf, it } from 'vitest'
 import {
+  ADMIN_USERS_FILTERS,
   adminUserDetailSchema,
-  adminUsersListQuerySchema,
 } from '../../src/schemas/admin/users/admin-user-detail.js'
 import {
   adminUsersCreateRequestSchema,
@@ -51,16 +51,11 @@ describe('admin user status', () => {
     ])
   })
 
-  it.each(USER_STATUS_VALUES)('filters the list by the %s status', (status) => {
-    expect(adminUsersListQuerySchema.parse({ status }).status).toBe(status)
+  it('filters the list by status with eq and in', () => {
+    expect(ADMIN_USERS_FILTERS.status).toEqual(['eq', 'in'])
   })
 
-  it('leaves the status filter optional and rejects an unknown status', () => {
-    expect(adminUsersListQuerySchema.parse({}).status).toBeUndefined()
-    expect(adminUsersListQuerySchema.safeParse({ status: 'deleted' }).success).toBe(false)
-  })
-
-  it('requires the derived status and a nullable activatedAt on the admin user detail', () => {
+  it('requires the stored status and a nullable activatedAt on the admin user detail', () => {
     const wire = {
       ...buildUserDetailWire(),
       bannedAt: null,

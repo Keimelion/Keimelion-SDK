@@ -1,5 +1,5 @@
-// Derived by the API from the account timestamps, never stored. Declared in precedence order: an
-// account matching several statuses reports the first one.
+// Stored on the account and kept in sync by the API from its timestamps. Declared in precedence
+// order: an account matching several statuses holds the first one.
 export const UserStatuses = {
   PENDING_DELETION: 'pending_deletion',
   BANNED: 'banned',

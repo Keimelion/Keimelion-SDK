@@ -16,6 +16,7 @@ export const ADMIN_USERS_FILTERS = {
   bannedAt: ['isNull'],
   deletedAt: ['isNull'],
   role: ['eq', 'in'],
+  status: ['eq', 'in'],
 } as const satisfies AdminFilterConfig
 
 export type AdminUsersListFilters = AdminFilterQuery<typeof ADMIN_USERS_FILTERS>
@@ -34,7 +35,6 @@ export type AdminUserDetailParsed = z.output<typeof adminUserDetailSchema>
 
 export const adminUsersListQuerySchema = paginationQuerySchema.extend({
   sort: sortQuerySchema(ADMIN_USERS_SORT_FIELDS),
-  status: z.enum(USER_STATUS_VALUES).optional(),
 })
 
 export type AdminUsersListQueryInput = z.input<typeof adminUsersListQuerySchema>
