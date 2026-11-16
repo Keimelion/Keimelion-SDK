@@ -30,10 +30,13 @@ describe('response conventions', () => {
       bannedAt: CREATED_AT_ISO,
       banReason: 'spam',
       deletedAt: null,
+      activatedAt: CREATED_AT_ISO,
+      status: 'banned',
       reservationsCount: 0,
     })
 
     expect(parsed.bannedAt).toBeInstanceOf(Date)
+    expect(parsed.activatedAt).toBeInstanceOf(Date)
     expect(parsed.deletedAt).toBeNull()
   })
 
@@ -161,6 +164,7 @@ describe('query schemas', () => {
   it('types the admin bracket filters from the declared operators', () => {
     expectTypeOf<{ 'email[ilike]': string }>().toExtend<schemas.AdminUsersListFilters>()
     expectTypeOf<{ 'role[in][]': string[] }>().toExtend<schemas.AdminUsersListFilters>()
+    expectTypeOf<{ 'status[in][]': string[] }>().toExtend<schemas.AdminUsersListFilters>()
     expectTypeOf<schemas.AdminUsersListFilters>().not.toHaveProperty('email[between][]')
     expectTypeOf<schemas.AdminUsersListFilters>().not.toHaveProperty('role[in]')
   })
@@ -211,6 +215,7 @@ describe.each<[string, z.ZodType, readonly string[], Record<string, readonly str
       bannedAt: ['isNull'],
       deletedAt: ['isNull'],
       role: ['eq', 'in'],
+      status: ['eq', 'in'],
     },
   ],
   [

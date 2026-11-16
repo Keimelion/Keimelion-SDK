@@ -55,6 +55,7 @@ import {
   adminUsersListResponseSchema,
 } from '../../../src/schemas/admin/users/admin-user-detail.js'
 import { adminUsersCreateResponseSchema } from '../../../src/schemas/admin/users/create-user.js'
+import { adminUsersResendInvitationResponseSchema } from '../../../src/schemas/admin/users/resend-invitation.js'
 import { adminUsersUpdateResponseSchema } from '../../../src/schemas/admin/users/update-user.js'
 import { messageResponseSchema } from '../../../src/schemas/_shared/message-response.js'
 import { noContentResponseSchema } from '../../../src/schemas/_shared/no-content.js'
@@ -88,6 +89,8 @@ function buildAdminUserWire(): object {
     bannedAt: null,
     banReason: null,
     deletedAt: null,
+    activatedAt: CREATED_AT_ISO,
+    status: 'active',
     reservationsCount: 2,
   }
 }
@@ -161,10 +164,16 @@ export const ADMIN_CASES: EndpointCase[] = [
         sort: 'email:asc',
         'email[ilike]': 'jane',
         'role[in][]': ['user'],
+        'status[in][]': ['invited', 'inactive'],
       }),
     wire: paginated(buildAdminUserWire()),
     schema: adminUsersListResponseSchema,
-    query: { sort: 'email:asc', 'email[ilike]': 'jane', 'role[in][]': ['user'] },
+    query: {
+      sort: 'email:asc',
+      'email[ilike]': 'jane',
+      'role[in][]': ['user'],
+      'status[in][]': ['invited', 'inactive'],
+    },
   },
   {
     id: 'POST /v1/admin/users',
@@ -192,6 +201,12 @@ export const ADMIN_CASES: EndpointCase[] = [
     call: (client) => client.admin.users.delete(ID),
     wire: MESSAGE_WIRE,
     schema: messageResponseSchema,
+  },
+  {
+    id: 'POST /v1/admin/users/:id/resend-invitation',
+    call: (client) => client.admin.users.resendInvitation(ID),
+    wire: { user: { ...buildAdminUserWire(), activatedAt: null, status: 'invited' } },
+    schema: adminUsersResendInvitationResponseSchema,
   },
   {
     id: 'GET /v1/admin/lists',

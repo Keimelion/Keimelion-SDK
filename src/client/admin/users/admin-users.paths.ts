@@ -4,4 +4,5 @@ export const AdminUsersPaths = {
   GET: '/v1/admin/users/:id',
   UPDATE: '/v1/admin/users/:id',
   DELETE: '/v1/admin/users/:id',
+  RESEND_INVITATION: '/v1/admin/users/:id/resend-invitation',
 } as const

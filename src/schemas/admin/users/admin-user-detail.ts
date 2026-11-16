@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { USER_STATUS_VALUES } from '../../../enums/user-status.js'
 import { paginatedResponseSchema, paginationQuerySchema } from '../../_shared/pagination.js'
 import { sortQuerySchema } from '../../_shared/sort.js'
 import type { AdminFilterConfig, AdminFilterQuery } from '../../_shared/admin-filter.js'
@@ -15,6 +16,7 @@ export const ADMIN_USERS_FILTERS = {
   bannedAt: ['isNull'],
   deletedAt: ['isNull'],
   role: ['eq', 'in'],
+  status: ['eq', 'in'],
 } as const satisfies AdminFilterConfig
 
 export type AdminUsersListFilters = AdminFilterQuery<typeof ADMIN_USERS_FILTERS>
@@ -23,6 +25,8 @@ export const adminUserDetailSchema = userDetailSchema.extend({
   bannedAt: isoDateTimeSchema.nullable(),
   banReason: z.string().nullable(),
   deletedAt: isoDateTimeSchema.nullable(),
+  activatedAt: isoDateTimeSchema.nullable(),
+  status: z.enum(USER_STATUS_VALUES),
   reservationsCount: z.number().int(),
 })
 

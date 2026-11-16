@@ -16,6 +16,8 @@ import type {
   AdminUsersCreateRequestInput,
   AdminUsersCreateResponseParsed,
 } from '../../../schemas/admin/users/create-user.js'
+import { adminUsersResendInvitationResponseSchema } from '../../../schemas/admin/users/resend-invitation.js'
+import type { AdminUsersResendInvitationResponseParsed } from '../../../schemas/admin/users/resend-invitation.js'
 import { adminUsersUpdateResponseSchema } from '../../../schemas/admin/users/update-user.js'
 import type {
   AdminUsersUpdateRequestInput,
@@ -32,6 +34,7 @@ export interface AdminUsersClient {
   get(id: string): Promise<AdminUsersGetResponseParsed>
   update(id: string, input: AdminUsersUpdateRequestInput): Promise<AdminUsersUpdateResponseParsed>
   delete(id: string): Promise<MessageResponseParsed>
+  resendInvitation(id: string): Promise<AdminUsersResendInvitationResponseParsed>
 }
 
 export function createAdminUsersClient(http: HttpClient): AdminUsersClient {
@@ -71,6 +74,13 @@ export function createAdminUsersClient(http: HttpClient): AdminUsersClient {
         path: AdminUsersPaths.DELETE,
         pathParams: { id },
         responseSchema: messageResponseSchema,
+      }),
+    resendInvitation: (id) =>
+      http.request({
+        method: HttpMethod.POST,
+        path: AdminUsersPaths.RESEND_INVITATION,
+        pathParams: { id },
+        responseSchema: adminUsersResendInvitationResponseSchema,
       }),
   }
 }
