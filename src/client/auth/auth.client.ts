@@ -12,6 +12,11 @@ import type {
   VerifyEmailRequestInput,
   VerifyEmailResponseParsed,
 } from '../../schemas/auth/verify-email.js'
+import { resendVerificationResponseSchema } from '../../schemas/auth/resend-verification.js'
+import type {
+  ResendVerificationRequestInput,
+  ResendVerificationResponseParsed,
+} from '../../schemas/auth/resend-verification.js'
 import { forgotPasswordResponseSchema } from '../../schemas/auth/forgot-password.js'
 import type {
   ForgotPasswordRequestInput,
@@ -29,6 +34,9 @@ import { AuthPaths } from './auth.paths.js'
 export interface AuthClient {
   register(input: RegisterRequestInput | FormData): Promise<RegisterResponseParsed>
   verifyEmail(input: VerifyEmailRequestInput): Promise<VerifyEmailResponseParsed>
+  resendVerification(
+    input: ResendVerificationRequestInput,
+  ): Promise<ResendVerificationResponseParsed>
   login(input: LoginRequestInput): Promise<LoginResponseParsed>
   refresh(input: RefreshRequestInput): Promise<RefreshResponseParsed>
   logout(input?: LogoutRequestInput): Promise<LogoutResponseParsed>
@@ -53,6 +61,14 @@ export function createAuthClient(http: HttpClient): AuthClient {
         body: input,
         auth: RequestAuthMode.NONE,
         responseSchema: verifyEmailResponseSchema,
+      }),
+    resendVerification: (input) =>
+      http.request({
+        method: HttpMethod.POST,
+        path: AuthPaths.RESEND_VERIFICATION,
+        body: input,
+        auth: RequestAuthMode.NONE,
+        responseSchema: resendVerificationResponseSchema,
       }),
     login: (input) =>
       http.request({

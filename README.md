@@ -97,6 +97,9 @@ const client = createClient({
   caller gets that 401 with the handler's error as `cause`.
 - It only applies to requests authenticated through `getToken`: public routes and explicit
   tokens (`rsv_…`) never trigger it, so `client.auth.refresh` cannot recurse.
+- `client.auth.refresh` throws a 403 `EMAIL_NOT_VERIFIED` while the account email is not
+  verified (the refresh token is kept and works once it is). `client.auth.resendVerification`
+  sends a new verification link and always answers the same generic message.
 
 ### File uploads and downloads
 

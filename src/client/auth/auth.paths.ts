@@ -1,6 +1,7 @@
 export const AuthPaths = {
   REGISTER: '/v1/auth/register',
   VERIFY_EMAIL: '/v1/auth/verify-email',
+  RESEND_VERIFICATION: '/v1/auth/resend-verification',
   LOGIN: '/v1/auth/login',
   REFRESH: '/v1/auth/refresh',
   LOGOUT: '/v1/auth/logout',
