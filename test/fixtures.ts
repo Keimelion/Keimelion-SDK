@@ -160,7 +160,13 @@ export function buildListDetailWire(): ListDetailInput {
     eventDate: null,
     owner: buildListMemberWire(),
     collaborators: [
-      { user: buildListMemberWire(), invitedEmail: null, status: 'accepted', role: 'owner' },
+      {
+        inviteId: null,
+        user: buildListMemberWire(),
+        invitedEmail: null,
+        status: 'accepted',
+        role: 'owner',
+      },
     ],
     tags: [buildTagSummaryWire()],
     ...TIMESTAMPS,

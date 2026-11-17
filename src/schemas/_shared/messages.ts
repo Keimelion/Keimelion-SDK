@@ -36,10 +36,14 @@ export const COLLAB_INVITE_NOT_FOUND_MESSAGE = 'Invitation not found'
 export const COLLAB_INVITE_EXPIRED_MESSAGE = 'This invitation has expired'
 
 export const COLLAB_INVITE_ALREADY_RESOLVED_MESSAGE =
-  'This invitation has already been accepted or revoked'
+  'This invitation has already been accepted, declined or revoked'
 
 export const COLLAB_EMAIL_MISMATCH_MESSAGE =
   'This invitation was issued to a different email address'
+
+export const COLLAB_MEMBER_NOT_FOUND_MESSAGE = 'This user is not an editor of the list'
+
+export const COLLAB_OWNER_CANNOT_LEAVE_MESSAGE = 'The list owner cannot leave their own list'
 
 export const RESERVATION_TOKEN_INVALID_MESSAGE =
   'The reservation token is invalid for this reservation'
