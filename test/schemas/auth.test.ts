@@ -14,6 +14,7 @@ import {
   type RegisterRequestInput,
   type RegisterRequestParsed,
 } from '../../src/schemas/auth/register.js'
+import { resendVerificationRequestSchema } from '../../src/schemas/auth/resend-verification.js'
 import { resetPasswordRequestSchema } from '../../src/schemas/auth/reset-password.js'
 import { verifyEmailRequestSchema } from '../../src/schemas/auth/verify-email.js'
 import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH } from '../../src/schemas/_shared/password.js'
@@ -139,6 +140,14 @@ describe('auth request schemas', () => {
     expect(
       resetPasswordRequestSchema.safeParse({ passwordResetToken: 't', password: tooLong }).success,
     ).toBe(false)
+  })
+
+  it('normalises the email on resend-verification and rejects an invalid one', () => {
+    expect(resendVerificationRequestSchema.parse({ email: ' Jane@Example.COM ' }).email).toBe(
+      'jane@example.com',
+    )
+    expect(resendVerificationRequestSchema.safeParse({ email: 'nope' }).success).toBe(false)
+    expect(resendVerificationRequestSchema.safeParse({}).success).toBe(false)
   })
 
   it('requires a GUID token on verify-email', () => {

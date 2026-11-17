@@ -7,6 +7,8 @@ export const refreshRequestSchema = z.object({
 export type RefreshRequestInput = z.input<typeof refreshRequestSchema>
 export type RefreshRequestParsed = z.output<typeof refreshRequestSchema>
 
+// An account whose email is not verified yet gets a 403 EMAIL_NOT_VERIFIED: the refresh token
+// is neither rotated nor revoked and works again once the email is verified.
 export const refreshResponseSchema = z.object({
   accessToken: z.string(),
   refreshToken: z.string(),

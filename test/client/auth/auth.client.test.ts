@@ -96,6 +96,11 @@ describe('client.auth', () => {
       },
       {
         call: (client: ReturnType<typeof createClient>) =>
+          client.auth.resendVerification({ email: 'a@b.co' }),
+        path: AuthPaths.RESEND_VERIFICATION,
+      },
+      {
+        call: (client: ReturnType<typeof createClient>) =>
           client.auth.forgotPassword({ email: 'a@b.co' }),
         path: AuthPaths.FORGOT_PASSWORD,
       },
