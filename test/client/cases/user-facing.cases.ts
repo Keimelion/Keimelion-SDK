@@ -70,6 +70,7 @@ const publicList = {
   description: null,
   listStatus: 'active',
   occasionTypeId: null,
+  eventDate: '2026-12-25',
   owner: { id: ID, username: 'jane', avatar: null },
   tags: [buildTagSummaryWire()],
   items: [{ ...buildListItemDetailWire(), name: 'Headphones', item: publicItem }],

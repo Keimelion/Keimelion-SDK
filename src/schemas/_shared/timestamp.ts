@@ -7,3 +7,8 @@ export const isoDateTimeSchema = z.codec(z.iso.datetime({ offset: true }), z.dat
 
 export type IsoDateTimeInput = z.input<typeof isoDateTimeSchema>
 export type IsoDateTimeParsed = z.output<typeof isoDateTimeSchema>
+
+export const isoDateSchema = z.iso.date({ abort: true })
+
+export type IsoDateInput = z.input<typeof isoDateSchema>
+export type IsoDateParsed = z.output<typeof isoDateSchema>

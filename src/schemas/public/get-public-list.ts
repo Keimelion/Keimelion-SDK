@@ -5,7 +5,7 @@ import { categorySummarySchema } from '../_shared/category-summary.js'
 import { imageDetailSchema } from '../_shared/image-detail.js'
 import { itemSourceDetailSchema } from '../_shared/item-detail.js'
 import { tagSummarySchema } from '../_shared/tag-summary.js'
-import { isoDateTimeSchema } from '../_shared/timestamp.js'
+import { isoDateSchema, isoDateTimeSchema } from '../_shared/timestamp.js'
 
 export const publicUserSummarySchema = z.object({
   id: z.guid(),
@@ -58,6 +58,7 @@ export const publicListDetailSchema = z.object({
   description: z.string().nullable(),
   listStatus: z.enum(LIST_STATUS_VALUES),
   occasionTypeId: z.guid().nullable(),
+  eventDate: isoDateSchema.nullable(),
   owner: publicUserSummarySchema.nullable(),
   tags: z.array(tagSummarySchema),
   items: z.array(publicListItemDetailSchema),

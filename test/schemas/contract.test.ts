@@ -190,7 +190,7 @@ describe.each<[string, z.ZodType, readonly string[], Record<string, readonly str
   [
     'GET /v1/lists',
     schemas.listsListQuerySchema,
-    ['createdAt', 'updatedAt', 'title', 'listStatus'],
+    ['createdAt', 'updatedAt', 'title', 'listStatus', 'eventDate'],
     null,
   ],
   [
@@ -223,7 +223,7 @@ describe.each<[string, z.ZodType, readonly string[], Record<string, readonly str
   [
     'GET /v1/admin/lists',
     schemas.adminListsListQuerySchema,
-    ['createdAt', 'updatedAt', 'title', 'listStatus'],
+    ['createdAt', 'updatedAt', 'title', 'listStatus', 'eventDate'],
     {
       id: ['eq', 'in'],
       title: ['eq', 'ilike'],
@@ -327,6 +327,63 @@ describe('list requests', () => {
     ).toBe(false)
     expect(LIST_STATUS_VALUES).toEqual(['active', 'deleted'])
     expect(ITEM_STATUS_VALUES).toEqual(['available', 'reserved'])
+  })
+
+  it('accepts a date-only eventDate within bounds, past dates included, and null', () => {
+    expect(schemas.listsCreateRequestSchema.parse({ title: 'a', eventDate: '2026-12-25' })).toEqual(
+      { title: 'a', eventDate: '2026-12-25' },
+    )
+    expect(
+      schemas.listsUpdateRequestSchema.parse({ eventDate: schemas.MIN_LIST_EVENT_DATE }).eventDate,
+    ).toBe(schemas.MIN_LIST_EVENT_DATE)
+    expect(
+      schemas.adminListsUpdateRequestSchema.parse({ eventDate: schemas.MAX_LIST_EVENT_DATE })
+        .eventDate,
+    ).toBe(schemas.MAX_LIST_EVENT_DATE)
+    expect(schemas.listsUpdateRequestSchema.parse({ eventDate: null }).eventDate).toBeNull()
+    expect(schemas.listsUpdateRequestSchema.parse({})).not.toHaveProperty('eventDate')
+  })
+
+  it.each([
+    'abc',
+    '2026-13-40',
+    '2026-02-30',
+    '2026-12-25T00:00:00Z',
+    '1999-12-31',
+    '2101-01-01',
+    20261225,
+  ])('rejects the eventDate %s on create, update and admin update', (eventDate) => {
+    expect(schemas.listsCreateRequestSchema.safeParse({ title: 'a', eventDate }).success).toBe(
+      false,
+    )
+    expect(schemas.listsUpdateRequestSchema.safeParse({ eventDate }).success).toBe(false)
+    expect(schemas.adminListsUpdateRequestSchema.safeParse({ eventDate }).success).toBe(false)
+  })
+
+  it('names the violated bound in the eventDate error message', () => {
+    const result = schemas.listEventDateSchema.safeParse('1999-12-31')
+
+    expect(result.error?.issues[0]?.message).toContain(schemas.MIN_LIST_EVENT_DATE)
+  })
+
+  it('reports only the format issue for a malformed eventDate, not a misleading bound', () => {
+    const result = schemas.listEventDateSchema.safeParse('abc')
+
+    expect(result.error?.issues.map((issue) => issue.code)).toEqual(['invalid_format'])
+  })
+
+  it('returns eventDate as a plain date string on list responses', () => {
+    const parsed = schemas.listDetailSchema.parse({
+      ...buildListDetailWire(),
+      eventDate: '2026-12-25',
+    })
+
+    expect(parsed.eventDate).toBe('2026-12-25')
+    expectTypeOf<schemas.ListDetailParsed['eventDate']>().toEqualTypeOf<string | null>()
+    expect(
+      schemas.listDetailSchema.safeParse({ ...buildListDetailWire(), eventDate: undefined })
+        .success,
+    ).toBe(false)
   })
 
   it('rejects more tags than allowed', () => {

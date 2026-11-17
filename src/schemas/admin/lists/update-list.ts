@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { LIST_STATUS_VALUES } from '../../../enums/list-status.js'
 import {
   listDescriptionSchema,
+  listEventDateSchema,
   listOccasionTypeIdSchema,
   listTitleSchema,
 } from '../../_shared/list-fields.js'
@@ -12,6 +13,7 @@ export const adminListsUpdateRequestSchema = z.strictObject({
   title: listTitleSchema.optional(),
   description: listDescriptionSchema.optional(),
   occasionTypeId: listOccasionTypeIdSchema.optional(),
+  eventDate: listEventDateSchema.optional(),
   listStatus: z.enum(LIST_STATUS_VALUES).optional(),
   tags: tagNamesSchema.optional(),
 })
