@@ -157,6 +157,7 @@ export function buildListDetailWire(): ListDetailInput {
     description: null,
     listStatus: 'active',
     occasionTypeId: null,
+    eventDate: null,
     owner: buildListMemberWire(),
     collaborators: [
       { user: buildListMemberWire(), invitedEmail: null, status: 'accepted', role: 'owner' },

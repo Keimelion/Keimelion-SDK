@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { listDetailSchema } from '../_shared/list-detail.js'
 import {
   listDescriptionSchema,
+  listEventDateSchema,
   listOccasionTypeIdSchema,
   listTitleSchema,
 } from '../_shared/list-fields.js'
@@ -11,6 +12,7 @@ export const listsCreateRequestSchema = z.strictObject({
   title: listTitleSchema,
   description: listDescriptionSchema.optional(),
   occasionTypeId: listOccasionTypeIdSchema.optional(),
+  eventDate: listEventDateSchema.optional(),
   tags: tagNamesSchema.optional(),
 })
 

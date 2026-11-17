@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
-import { isoDateTimeSchema } from '../../src/schemas/_shared/timestamp.js'
+import { isoDateSchema, isoDateTimeSchema } from '../../src/schemas/_shared/timestamp.js'
 import { CREATED_AT_ISO } from '../fixtures.js'
 
 describe('isoDateTimeSchema', () => {
@@ -28,5 +28,17 @@ describe('isoDateTimeSchema', () => {
 
   it('encodes a Date back into the ISO wire format', () => {
     expect(z.encode(isoDateTimeSchema, new Date(CREATED_AT_ISO))).toBe(CREATED_AT_ISO)
+  })
+})
+
+describe('isoDateSchema', () => {
+  it('keeps a valid date-only string as a string', () => {
+    expect(isoDateSchema.parse('2024-02-29')).toBe('2024-02-29')
+  })
+
+  it('rejects impossible calendar dates and datetimes', () => {
+    expect(isoDateSchema.safeParse('2026-02-29').success).toBe(false)
+    expect(isoDateSchema.safeParse('2026-04-31').success).toBe(false)
+    expect(isoDateSchema.safeParse('2026-12-25T00:00:00Z').success).toBe(false)
   })
 })
