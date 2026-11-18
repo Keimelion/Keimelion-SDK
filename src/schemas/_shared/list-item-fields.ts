@@ -1,4 +1,6 @@
 import { z } from 'zod'
+import { MAX_SOURCE_URL_LENGTH } from './item-source-fields.js'
+import { httpsUrlSchema } from './url.js'
 
 export const MAX_CREATOR_NOTE_LENGTH = 1000
 export const MAX_QUANTITY_DESIRED = 100
@@ -31,3 +33,13 @@ export const customNameSchema = z
 
 export type CustomNameInput = z.input<typeof customNameSchema>
 export type CustomNameParsed = z.output<typeof customNameSchema>
+
+export const customUrlSchema = z
+  .string()
+  .trim()
+  .nullable()
+  .transform((value) => (value === '' ? null : value))
+  .pipe(httpsUrlSchema('customUrl', MAX_SOURCE_URL_LENGTH).nullable())
+
+export type CustomUrlInput = z.input<typeof customUrlSchema>
+export type CustomUrlParsed = z.output<typeof customUrlSchema>

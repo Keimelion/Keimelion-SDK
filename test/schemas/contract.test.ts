@@ -619,6 +619,47 @@ describe('list item requests', () => {
         .success,
     ).toBe(false)
   })
+
+  it('accepts a trimmed HTTPS customUrl on add-item and update', () => {
+    const url = 'https://shop.example.com/p/1?ref=abc'
+
+    expect(
+      schemas.listsAddItemRequestSchema.parse({ itemId: ID, customUrl: ` ${url} ` }).customUrl,
+    ).toBe(url)
+    expect(
+      schemas.listsAddItemRequestSchema.parse({ name: 'Headphones', customUrl: url }).customUrl,
+    ).toBe(url)
+    expect(schemas.listItemsUpdateRequestSchema.parse({ customUrl: url }).customUrl).toBe(url)
+  })
+
+  it('turns a blank customUrl into null so it can be cleared', () => {
+    expect(schemas.listItemsUpdateRequestSchema.parse({ customUrl: '  ' }).customUrl).toBeNull()
+    expect(schemas.listItemsUpdateRequestSchema.parse({ customUrl: null }).customUrl).toBeNull()
+    expect(
+      schemas.listsAddItemRequestSchema.parse({ itemId: ID, customUrl: null }).customUrl,
+    ).toBeNull()
+  })
+
+  it('rejects a non-HTTPS or over-length customUrl', () => {
+    const prefix = 'https://shop.example.com/'
+    const atMax = `${prefix}${'a'.repeat(schemas.MAX_SOURCE_URL_LENGTH - prefix.length)}`
+    const overLength = `${atMax}a`
+    const nonHttps = schemas.listItemsUpdateRequestSchema.safeParse({
+      customUrl: 'http://shop.example.com/p/1',
+    })
+
+    expect(nonHttps.error?.issues[0]?.message).toBe('customUrl must use HTTPS')
+    expect(schemas.listItemsUpdateRequestSchema.safeParse({ customUrl: 'not a url' }).success).toBe(
+      false,
+    )
+    expect(schemas.listItemsUpdateRequestSchema.safeParse({ customUrl: overLength }).success).toBe(
+      false,
+    )
+    expect(schemas.listItemsUpdateRequestSchema.safeParse({ customUrl: atMax }).success).toBe(true)
+    expect(
+      schemas.listsAddItemRequestSchema.safeParse({ itemId: ID, customUrl: overLength }).success,
+    ).toBe(false)
+  })
 })
 
 describe('reservation requests', () => {

@@ -42,6 +42,7 @@ export const publicListItemDetailSchema = z.object({
   sortOrder: z.number().int().nullable(),
   creatorNote: z.string().nullable(),
   customName: z.string().nullable(),
+  customUrl: z.string().nullable(),
   name: z.string(),
   item: publicItemDetailSchema,
   createdAt: isoDateTimeSchema,

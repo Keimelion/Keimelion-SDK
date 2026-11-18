@@ -16,6 +16,7 @@ import { listItemDetailSchema } from '../_shared/list-item-detail.js'
 import {
   creatorNoteSchema,
   customNameSchema,
+  customUrlSchema,
   quantityDesiredSchema,
 } from '../_shared/list-item-fields.js'
 import { ADD_ITEM_TARGET_MESSAGE } from '../_shared/messages.js'
@@ -25,9 +26,11 @@ const listItemShape = {
   quantityDesired: quantityDesiredSchema.optional(),
   creatorNote: creatorNoteSchema.optional(),
   customName: customNameSchema.optional(),
+  customUrl: customUrlSchema.optional(),
 }
 
-// A sourceUrl sent with an itemId only becomes a new source of that item when the API can attach it.
+// A sourceUrl sent with an itemId only becomes a new source of that item when the API can attach it;
+// otherwise it is kept as the personal customUrl of the list item (unless customUrl is explicit).
 export const listsAddItemByIdRequestSchema = z.strictObject({
   itemId: z.guid(),
   sourceUrl: itemSourceUrlSchema.optional(),

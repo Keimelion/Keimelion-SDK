@@ -12,6 +12,7 @@ export const listItemDetailSchema = z.object({
   sortOrder: z.number().int().nullable(),
   creatorNote: z.string().nullable(),
   customName: z.string().nullable(),
+  customUrl: z.string().nullable(),
   createdAt: isoDateTimeSchema,
   updatedAt: isoDateTimeSchema,
 })

@@ -3,6 +3,7 @@ import { listItemDetailSchema } from '../_shared/list-item-detail.js'
 import {
   creatorNoteSchema,
   customNameSchema,
+  customUrlSchema,
   quantityDesiredSchema,
 } from '../_shared/list-item-fields.js'
 
@@ -10,6 +11,7 @@ export const listItemsUpdateRequestSchema = z.strictObject({
   quantityDesired: quantityDesiredSchema.optional(),
   creatorNote: creatorNoteSchema.optional(),
   customName: customNameSchema.optional(),
+  customUrl: customUrlSchema.optional(),
   sortOrder: z.number().int().optional(),
 })
 
