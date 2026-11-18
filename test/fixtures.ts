@@ -128,6 +128,7 @@ export function buildListItemDetailWire(): ListItemDetailInput {
     sortOrder: null,
     creatorNote: null,
     customName: null,
+    customUrl: null,
     ...TIMESTAMPS,
   }
 }
