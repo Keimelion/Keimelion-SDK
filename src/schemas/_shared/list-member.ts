@@ -15,7 +15,9 @@ export const listMemberSummarySchema = z.object({
 export type ListMemberSummaryInput = z.input<typeof listMemberSummarySchema>
 export type ListMemberSummaryParsed = z.output<typeof listMemberSummarySchema>
 
+// inviteId is set on a pending invite entry (the id to revoke) and null on a member entry.
 export const collaboratorSummarySchema = z.object({
+  inviteId: z.guid().nullable(),
   user: listMemberSummarySchema.nullable(),
   invitedEmail: z.string().nullable(),
   status: z.enum(INVITE_STATUS_VALUES),

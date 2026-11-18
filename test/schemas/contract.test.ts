@@ -422,6 +422,40 @@ describe('collaborator requests', () => {
       false,
     )
   })
+
+  it('declines with the same 64-character hex invite token as accept', () => {
+    const valid = 'a'.repeat(schemas.COLLABORATOR_INVITE_TOKEN_HEX_LENGTH)
+
+    expect(
+      schemas.collaboratorsDeclineInviteRequestSchema.safeParse({ token: valid }).success,
+    ).toBe(true)
+    expect(schemas.collaboratorsDeclineInviteRequestSchema.safeParse({ token: '' }).success).toBe(
+      false,
+    )
+    expect(
+      schemas.collaboratorsDeclineInviteRequestSchema.safeParse({ token: valid, extra: 1 }).success,
+    ).toBe(false)
+  })
+
+  it('carries the invite id on a pending collaborator summary and null on a member', () => {
+    const member = schemas.collaboratorSummarySchema.parse({
+      inviteId: null,
+      user: null,
+      invitedEmail: null,
+      status: 'accepted',
+      role: 'owner',
+    })
+    const pending = schemas.collaboratorSummarySchema.parse({
+      inviteId: ID,
+      user: null,
+      invitedEmail: 'bob@example.com',
+      status: 'pending',
+      role: 'editor',
+    })
+
+    expect(member.inviteId).toBeNull()
+    expect(pending.inviteId).toBe(ID)
+  })
 })
 
 describe('item requests', () => {
