@@ -1,5 +1,6 @@
 import { describe, expect, expectTypeOf, it } from 'vitest'
 import type { z } from 'zod'
+import { ITEM_CONTRIBUTION_ACTION_VALUES } from '../../src/enums/item-contribution-action.js'
 import { ITEM_STATUS_VALUES } from '../../src/enums/item-status.js'
 import { LIST_STATUS_VALUES } from '../../src/enums/list-status.js'
 import * as schemas from '../../src/schemas/index.js'
@@ -9,6 +10,7 @@ import {
   PAGINATION_WIRE,
   SOURCE_ID,
   buildItemSourceDetailWire,
+  buildItemWithSourcesWire,
   buildListDetailWire,
   buildUserDetailWire,
 } from '../fixtures.js'
@@ -830,5 +832,56 @@ describe('admin requests', () => {
     expect(
       schemas.adminUsersUpdateRequestSchema.parse({ bannedAt: CREATED_AT_ISO, banReason: 'spam' }),
     ).toEqual({})
+  })
+})
+
+describe('admin item contributions', () => {
+  const contribution = {
+    id: OTHER_ID,
+    action: 'admin_update',
+    changes: {
+      name: { from: 'Old', to: 'New' },
+      imageId: { from: ID, to: null },
+    },
+    user: { id: ID, username: null },
+    createdAt: CREATED_AT_ISO,
+  }
+
+  it('embeds the contributions in the admin item GET response only', () => {
+    const item = { ...buildItemWithSourcesWire(), reservationCount: 0 }
+
+    const parsed = schemas.adminItemsGetResponseSchema.parse({
+      item: { ...item, contributions: [contribution] },
+    })
+
+    expect(parsed.item.contributions[0]?.createdAt).toBeInstanceOf(Date)
+    expect(parsed.item.contributions[0]?.changes).toEqual(contribution.changes)
+    expect(schemas.adminItemsGetResponseSchema.safeParse({ item }).success).toBe(false)
+    expect(schemas.adminItemsListResponseSchema.shape.items.element.shape).not.toHaveProperty(
+      'contributions',
+    )
+  })
+
+  it('accepts both actions and a contributor removed after a hard delete', () => {
+    expect(ITEM_CONTRIBUTION_ACTION_VALUES).toEqual(['fill', 'admin_update'])
+    expect(
+      schemas.itemContributionDetailSchema.parse({ ...contribution, action: 'fill', user: null })
+        .user,
+    ).toBeNull()
+    expect(
+      schemas.itemContributionDetailSchema.safeParse({ ...contribution, action: 'create' }).success,
+    ).toBe(false)
+  })
+
+  it('keeps only the known changed fields with a from/to pair of nullable strings', () => {
+    const parsed = schemas.itemContributionChangesSchema.parse({
+      gtin: { from: null, to: '04006381333931' },
+      price: { from: '1.00', to: '2.00' },
+    })
+
+    expect(parsed).toEqual({ gtin: { from: null, to: '04006381333931' } })
+    expect(
+      schemas.itemContributionChangesSchema.safeParse({ description: { from: null } }).success,
+    ).toBe(false)
   })
 })

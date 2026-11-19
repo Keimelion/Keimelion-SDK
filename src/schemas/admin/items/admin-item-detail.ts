@@ -3,6 +3,7 @@ import { itemWithSourcesDetailSchema } from '../../_shared/item-detail.js'
 import { paginatedResponseSchema, paginationQuerySchema } from '../../_shared/pagination.js'
 import { sortQuerySchema } from '../../_shared/sort.js'
 import type { AdminFilterConfig, AdminFilterQuery } from '../../_shared/admin-filter.js'
+import { itemContributionDetailSchema } from './item-contribution-detail.js'
 
 export const ADMIN_ITEMS_SORT_FIELDS = ['name', 'createdAt', 'updatedAt'] as const
 
@@ -22,6 +23,18 @@ export const adminItemDetailSchema = itemWithSourcesDetailSchema.extend({
 export type AdminItemDetailInput = z.input<typeof adminItemDetailSchema>
 export type AdminItemDetailParsed = z.output<typeof adminItemDetailSchema>
 
+// Post-creation history of the item, newest first. The creator stays in createdByUserId.
+export const adminItemWithContributionsDetailSchema = adminItemDetailSchema.extend({
+  contributions: z.array(itemContributionDetailSchema),
+})
+
+export type AdminItemWithContributionsDetailInput = z.input<
+  typeof adminItemWithContributionsDetailSchema
+>
+export type AdminItemWithContributionsDetailParsed = z.output<
+  typeof adminItemWithContributionsDetailSchema
+>
+
 export const adminItemsListQuerySchema = paginationQuerySchema.extend({
   sort: sortQuerySchema(ADMIN_ITEMS_SORT_FIELDS),
 })
@@ -35,7 +48,7 @@ export type AdminItemsListResponseInput = z.input<typeof adminItemsListResponseS
 export type AdminItemsListResponseParsed = z.output<typeof adminItemsListResponseSchema>
 
 export const adminItemsGetResponseSchema = z.object({
-  item: adminItemDetailSchema,
+  item: adminItemWithContributionsDetailSchema,
 })
 
 export type AdminItemsGetResponseInput = z.input<typeof adminItemsGetResponseSchema>

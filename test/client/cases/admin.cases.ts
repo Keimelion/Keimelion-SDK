@@ -111,6 +111,21 @@ function buildAdminItemWire(): object {
   return { ...buildItemWithSourcesWire(), reservationCount: 1 }
 }
 
+function buildAdminItemWithContributionsWire(): object {
+  return {
+    ...buildAdminItemWire(),
+    contributions: [
+      {
+        id: SOURCE_ID,
+        action: 'fill',
+        changes: { description: { from: null, to: 'Filled' } },
+        user: { id: ID, username: 'jane' },
+        createdAt: CREATED_AT_ISO,
+      },
+    ],
+  }
+}
+
 function buildShopDetailWire(): object {
   return { ...buildShopSummaryWire(), sortOrder: 0, ...TIMESTAMPS }
 }
@@ -282,7 +297,7 @@ export const ADMIN_CASES: EndpointCase[] = [
   {
     id: 'GET /v1/admin/items/:id',
     call: (client) => client.admin.items.get(ID),
-    wire: { item: buildAdminItemWire() },
+    wire: { item: buildAdminItemWithContributionsWire() },
     schema: adminItemsGetResponseSchema,
   },
   {
