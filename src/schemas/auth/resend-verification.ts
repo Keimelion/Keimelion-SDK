@@ -2,6 +2,9 @@ import { z } from 'zod'
 import { messageResponseSchema } from '../_shared/message-response.js'
 import { emailSchema } from '../_shared/email.js'
 
+// Minimum delay between two verification links for one account: a resend inside it sends nothing.
+export const RESEND_VERIFICATION_COOLDOWN_SECONDS = 60
+
 export const resendVerificationRequestSchema = z.object({
   email: emailSchema,
 })

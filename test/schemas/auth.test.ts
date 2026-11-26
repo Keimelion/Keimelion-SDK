@@ -15,9 +15,15 @@ import {
   type RegisterRequestInput,
   type RegisterRequestParsed,
 } from '../../src/schemas/auth/register.js'
-import { resendVerificationRequestSchema } from '../../src/schemas/auth/resend-verification.js'
+import {
+  RESEND_VERIFICATION_COOLDOWN_SECONDS,
+  resendVerificationRequestSchema,
+} from '../../src/schemas/auth/resend-verification.js'
 import { resetPasswordRequestSchema } from '../../src/schemas/auth/reset-password.js'
-import { verifyEmailRequestSchema } from '../../src/schemas/auth/verify-email.js'
+import {
+  verifyEmailRequestSchema,
+  verifyEmailResponseSchema,
+} from '../../src/schemas/auth/verify-email.js'
 import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH } from '../../src/schemas/_shared/password.js'
 import { buildImageDetailWire, buildUserDetailWire, UPDATED_AT_ISO } from '../fixtures.js'
 
@@ -191,5 +197,41 @@ describe('auth request schemas', () => {
 
   it('requires a GUID token on verify-email', () => {
     expect(verifyEmailRequestSchema.safeParse({ token: 'abc' }).success).toBe(false)
+  })
+
+  it('exposes the verification resend cooldown in seconds', () => {
+    expect(RESEND_VERIFICATION_COOLDOWN_SECONDS).toBe(60)
+  })
+})
+
+describe('verifyEmailResponseSchema', () => {
+  const VERIFIED_USER_ID = '00000000-0000-0000-0000-000000000001'
+
+  it('carries the verified account id and whether the link had already been used', () => {
+    const parsed = verifyEmailResponseSchema.parse({
+      message: 'Email verified successfully',
+      userId: VERIFIED_USER_ID,
+      alreadyVerified: true,
+    })
+
+    expect(parsed).toEqual({
+      message: 'Email verified successfully',
+      userId: VERIFIED_USER_ID,
+      alreadyVerified: true,
+    })
+  })
+
+  it('requires a GUID userId and a boolean alreadyVerified', () => {
+    const base = { message: 'ok', userId: VERIFIED_USER_ID, alreadyVerified: false }
+
+    expect(verifyEmailResponseSchema.safeParse(base).success).toBe(true)
+    expect(verifyEmailResponseSchema.safeParse({ ...base, userId: 'abc' }).success).toBe(false)
+    expect(verifyEmailResponseSchema.safeParse({ ...base, userId: undefined }).success).toBe(false)
+    expect(verifyEmailResponseSchema.safeParse({ ...base, alreadyVerified: 'true' }).success).toBe(
+      false,
+    )
+    expect(
+      verifyEmailResponseSchema.safeParse({ ...base, alreadyVerified: undefined }).success,
+    ).toBe(false)
   })
 })

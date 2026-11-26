@@ -93,27 +93,35 @@ describe('client.auth', () => {
       {
         call: (client: ReturnType<typeof createClient>) => client.auth.verifyEmail({ token: 'x' }),
         path: AuthPaths.VERIFY_EMAIL,
+        body: {
+          ...message,
+          userId: '00000000-0000-0000-0000-000000000001',
+          alreadyVerified: false,
+        },
       },
       {
         call: (client: ReturnType<typeof createClient>) =>
           client.auth.resendVerification({ email: 'a@b.co' }),
         path: AuthPaths.RESEND_VERIFICATION,
+        body: message,
       },
       {
         call: (client: ReturnType<typeof createClient>) =>
           client.auth.forgotPassword({ email: 'a@b.co' }),
         path: AuthPaths.FORGOT_PASSWORD,
+        body: message,
       },
       {
         call: (client: ReturnType<typeof createClient>) =>
           client.auth.resetPassword({ passwordResetToken: 't', password: 'password1' }),
         path: AuthPaths.RESET_PASSWORD,
+        body: message,
       },
     ]
 
     const urls = await Promise.all(
-      cases.map(async ({ call }) => {
-        const { fetch, calls } = mockFetchResponse(jsonResponse(message))
+      cases.map(async ({ call, body }) => {
+        const { fetch, calls } = mockFetchResponse(jsonResponse(body))
         await call(createClient({ baseUrl: BASE_URL, getToken: () => null, fetch }))
         return calls[0]?.url
       }),
