@@ -21,9 +21,12 @@ export const registerRequestSchema = z.object({
 export type RegisterRequestInput = z.input<typeof registerRequestSchema>
 export type RegisterRequestParsed = z.output<typeof registerRequestSchema>
 
+// The account is signed in right away, its email still unverified: see
+// userDetailSchema.emailVerificationDeadlineAt for the grace period.
 export const registerResponseSchema = z.object({
-  user: userDetailSchema,
+  accessToken: z.string(),
   refreshToken: z.string(),
+  user: userDetailSchema,
 })
 
 export type RegisterResponseInput = z.input<typeof registerResponseSchema>

@@ -122,9 +122,9 @@ describe('client.auth', () => {
     expect(urls).toEqual(cases.map(({ path }) => `${BASE_URL}${path}`))
   })
 
-  it('register returns the decoded user and refresh token', async () => {
+  it('register returns the decoded user and both session tokens', async () => {
     const { fetch, calls } = mockFetchResponse(
-      jsonResponse({ user: buildUserDetailWire(), refreshToken: 'r1' }, 201),
+      jsonResponse({ accessToken: 'a1', refreshToken: 'r1', user: buildUserDetailWire() }, 201),
     )
     const client = createClient({ baseUrl: BASE_URL, getToken: () => null, fetch })
 
@@ -132,6 +132,7 @@ describe('client.auth', () => {
 
     expect(calls[0]?.url).toBe(`${BASE_URL}${AuthPaths.REGISTER}`)
     expect(result.user.emailVerifiedAt).toBeInstanceOf(Date)
+    expect(result.accessToken).toBe('a1')
     expect(result.refreshToken).toBe('r1')
   })
 })

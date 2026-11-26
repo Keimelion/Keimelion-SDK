@@ -11,6 +11,7 @@ import { logoutRequestSchema } from '../../src/schemas/auth/logout.js'
 import { refreshRequestSchema } from '../../src/schemas/auth/refresh.js'
 import {
   registerRequestSchema,
+  registerResponseSchema,
   type RegisterRequestInput,
   type RegisterRequestParsed,
 } from '../../src/schemas/auth/register.js'
@@ -76,6 +77,33 @@ describe('loginResponseSchema', () => {
     expect(parsed.user).not.toHaveProperty('futureField')
   })
 
+  it('decodes the email verification deadline of an unverified account into a Date', () => {
+    const parsed = loginResponseSchema.parse({
+      accessToken: 'access',
+      refreshToken: 'refresh',
+      user: {
+        ...buildUserDetailWire(),
+        emailVerifiedAt: null,
+        emailVerificationDeadlineAt: UPDATED_AT_ISO,
+      },
+    })
+
+    expect(parsed.user.emailVerificationDeadlineAt?.toISOString()).toBe(UPDATED_AT_ISO)
+  })
+
+  it('requires the email verification deadline, null once verified', () => {
+    const result = loginResponseSchema.safeParse({
+      accessToken: 'access',
+      refreshToken: 'refresh',
+      user: { ...buildUserDetailWire(), emailVerificationDeadlineAt: undefined },
+    })
+
+    expect(result.success).toBe(false)
+    expectTypeOf<
+      LoginResponseParsed['user']['emailVerificationDeadlineAt']
+    >().toEqualTypeOf<Date | null>()
+  })
+
   it('rejects a user with an invalid timestamp', () => {
     const result = loginResponseSchema.safeParse({
       accessToken: 'access',
@@ -115,6 +143,17 @@ describe('registerRequestSchema', () => {
     })
 
     expect(result.success).toBe(false)
+  })
+})
+
+describe('registerResponseSchema', () => {
+  it('signs the account in right away with both session tokens', () => {
+    const wire = { accessToken: 'access', refreshToken: 'refresh', user: buildUserDetailWire() }
+
+    const withoutAccessToken = registerResponseSchema.safeParse({ ...wire, accessToken: undefined })
+
+    expect(registerResponseSchema.parse(wire).accessToken).toBe('access')
+    expect(withoutAccessToken.success).toBe(false)
   })
 })
 
