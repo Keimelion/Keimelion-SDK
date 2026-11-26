@@ -104,7 +104,12 @@ const client = createClient({
   creation + the API grace period, `null` once verified); from that instant `client.auth.login`
   and `client.auth.refresh` throw a 403 `EMAIL_NOT_VERIFIED` (the refresh token is kept and
   works once the email is verified). `client.auth.resendVerification` sends a new verification
-  link and always answers the same generic message.
+  link and always answers the same generic message; a resend within
+  `RESEND_VERIFICATION_COOLDOWN_SECONDS` of the previous link sends nothing.
+- `client.auth.verifyEmail` answers `{ message, userId, alreadyVerified }`. A used link keeps
+  answering until it expires, with `alreadyVerified: true`; an expired, unknown or replaced link
+  throws a 400 `BAD_REQUEST`. Compare `userId` with the stored user before resuming a stored
+  session: the link may belong to another account than the one signed in on the device.
 
 ### File uploads and downloads
 
