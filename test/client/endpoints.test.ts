@@ -173,7 +173,7 @@ describe('multipart endpoints', () => {
   it.each<[string, object, (client: KeimelionClient, form: FormData) => Promise<unknown>]>([
     [
       'POST /v1/auth/register',
-      { user: buildUserDetailWire(), refreshToken: 'refresh' },
+      { accessToken: 'access', refreshToken: 'refresh', user: buildUserDetailWire() },
       (client, form) => client.auth.register(form),
     ],
     ['POST /v1/lists/:id/items', addItemWire, (client, form) => client.lists.addItem(ID, form)],

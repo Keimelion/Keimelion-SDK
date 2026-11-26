@@ -99,9 +99,12 @@ const client = createClient({
   handler's error as `cause`.
 - It only applies to requests authenticated through `getToken`: public routes and explicit
   tokens (`rsv_…`) never trigger it, so `client.auth.refresh` cannot recurse.
-- `client.auth.refresh` throws a 403 `EMAIL_NOT_VERIFIED` while the account email is not
-  verified (the refresh token is kept and works once it is). `client.auth.resendVerification`
-  sends a new verification link and always answers the same generic message.
+- `client.auth.register` signs the account in right away (`accessToken` + `refreshToken`). An
+  unverified account can log in and refresh until `user.emailVerificationDeadlineAt` (account
+  creation + the API grace period, `null` once verified); from that instant `client.auth.login`
+  and `client.auth.refresh` throw a 403 `EMAIL_NOT_VERIFIED` (the refresh token is kept and
+  works once the email is verified). `client.auth.resendVerification` sends a new verification
+  link and always answers the same generic message.
 
 ### File uploads and downloads
 

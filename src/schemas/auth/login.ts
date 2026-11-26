@@ -10,6 +10,8 @@ export const loginRequestSchema = z.object({
 export type LoginRequestInput = z.input<typeof loginRequestSchema>
 export type LoginRequestParsed = z.output<typeof loginRequestSchema>
 
+// An unverified account signs in until its user.emailVerificationDeadlineAt; from that instant it
+// gets a 403 EMAIL_NOT_VERIFIED. A banned account gets ACCOUNT_BANNED, verified or not.
 export const loginResponseSchema = z.object({
   accessToken: z.string(),
   refreshToken: z.string(),

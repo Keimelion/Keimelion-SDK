@@ -57,6 +57,7 @@ export function buildUserDetailWire(): UserDetailInput {
     isMarketingOptedIn: false,
     defaultCurrency: 'EUR',
     emailVerifiedAt: CREATED_AT_ISO,
+    emailVerificationDeadlineAt: null,
     lastActiveAt: null,
     createdAt: CREATED_AT_ISO,
     updatedAt: UPDATED_AT_ISO,

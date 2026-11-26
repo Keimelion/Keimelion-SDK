@@ -18,6 +18,9 @@ export const userDetailSchema = z.object({
   isMarketingOptedIn: z.boolean(),
   defaultCurrency: supportedCurrencyEnum,
   emailVerifiedAt: isoDateTimeSchema.nullable(),
+  // Computed, never stored: createdAt + the API grace period while the email is not verified,
+  // null once it is. From that instant login and refresh answer 403 EMAIL_NOT_VERIFIED.
+  emailVerificationDeadlineAt: isoDateTimeSchema.nullable(),
   lastActiveAt: isoDateTimeSchema.nullable(),
   createdAt: isoDateTimeSchema,
   updatedAt: isoDateTimeSchema,
