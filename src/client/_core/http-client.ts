@@ -109,6 +109,7 @@ export function createHttpClient(options: HttpClientOptions): HttpClient {
     }
     const recovery = await recoverSession(first.token)
     if ('cause' in recovery) {
+      if (recovery.cause instanceof ApiError) throw recovery.cause
       throw toApiError(first.response.status, await readJsonBody(first.response), recovery.cause)
     }
     if (!recovery.recovered) return first.response
