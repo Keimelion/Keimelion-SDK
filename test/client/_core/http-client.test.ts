@@ -541,6 +541,27 @@ describe('createHttpClient', () => {
       expect(calls).toHaveLength(1)
     })
 
+    it('rethrows the handler ApiError unchanged when the handler rejects with one', async () => {
+      const emailNotVerified = new ApiError({
+        status: HttpStatus.FORBIDDEN,
+        code: ErrorCode.EMAIL_NOT_VERIFIED,
+        message: 'Email not verified',
+        metadata: {},
+      })
+      const { fetch, calls } = tokenAwareFetch()
+      const http = createHttpClient({
+        baseUrl: BASE_URL,
+        getToken: () => 'expired',
+        fetch,
+        onUnauthorized: () => Promise.reject(emailNotVerified),
+      })
+
+      const error = await captureError(http.request(pingRequest))
+
+      expect(error).toBe(emailNotVerified)
+      expect(calls).toHaveLength(1)
+    })
+
     it('surfaces the 401 with the handler error as cause when the handler rejects', async () => {
       const refreshFailure = new Error('refresh failed')
       const { fetch, calls } = tokenAwareFetch()

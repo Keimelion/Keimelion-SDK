@@ -93,8 +93,10 @@ const client = createClient({
 
 - Concurrent 401s share one call, and each failed request is replayed exactly once. A 401 that
   arrives after the refresh finished is simply replayed, without refreshing again.
-- Resolve `false` to give up: the caller gets the original 401. If the handler rejects, the
-  caller gets that 401 with the handler's error as `cause`.
+- Resolve `false` to give up: the caller gets the original 401. If the handler rejects with an
+  `ApiError` (for example the 403 `EMAIL_NOT_VERIFIED` thrown by `client.auth.refresh`), the
+  caller gets that error unchanged; any other rejection surfaces as the original 401 with the
+  handler's error as `cause`.
 - It only applies to requests authenticated through `getToken`: public routes and explicit
   tokens (`rsv_…`) never trigger it, so `client.auth.refresh` cannot recurse.
 - `client.auth.refresh` throws a 403 `EMAIL_NOT_VERIFIED` while the account email is not
